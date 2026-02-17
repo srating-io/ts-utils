@@ -1,5 +1,5 @@
 
-class Text {
+export class Text {
   public static levenshtein(a: string, b: string): number {
     const matrix: number[][] = [];
 
@@ -44,5 +44,3 @@ class Text {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
   }
 }
-
-export default Text;

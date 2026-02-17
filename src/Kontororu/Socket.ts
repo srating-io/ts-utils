@@ -1,5 +1,4 @@
-
-import Kontororu from '../Kontororu';
+import { Kontororu } from '@/Kontororu.js';
 
 
 const hostname = process.env.NEXT_PUBLIC_WS_HOST;
@@ -31,14 +30,14 @@ class Socket extends Kontororu {
 
   private url = `${this.protocol}//${hostname}${port ? `:${port}` : ''}/${path}`;
 
-  private session_id: string;
+  private session_id?: string;
 
   private message_queue: SocketMessage[] = [];
 
   // Reconnection logic
   private reconnect_attempts: number = 0;
   private should_reconnect = true;
-  private reconnect_timeout: NodeJS.Timeout;
+  private reconnect_timeout?: NodeJS.Timeout;
 
   // Heartbeat / Sleep Detection Logic
   private last_heartbeat_timestamp: number = Date.now();
@@ -267,7 +266,9 @@ class Socket extends Kontororu {
 
       this.reconnect_timeout = setTimeout(() => {
         this.reconnect_attempts++;
-        this.connect(this.session_id);
+        if (this.session_id) {
+          this.connect(this.session_id);
+        }
       }, delay);
     }
 

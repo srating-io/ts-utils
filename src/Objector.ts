@@ -14,7 +14,7 @@ type MergeAll<T extends object[]> =
 /**
  * Class to manipulate objects
  */
-class Objector {
+export class Objector {
   // constructor() {
   // }
 
@@ -143,4 +143,3 @@ class Objector {
   }
 }
 
-export default Objector;

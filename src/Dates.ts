@@ -2,7 +2,7 @@
 /* eslint-disable one-var */
 
 
-class Dates {
+export class Dates {
   // constructor() {
   // }
 
@@ -419,4 +419,3 @@ class Dates {
   }
 }
 
-export default Dates;

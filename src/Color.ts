@@ -1,36 +1,8 @@
 /* eslint-disable no-mixed-operators */
 /* eslint-disable no-bitwise */
 
-import { useTheme } from '../hooks/useTheme';
 
-
-export const getBestColor: () => string = () => {
-  const theme = useTheme();
-
-  return theme.mode === 'light' ? theme.success.main : theme.success.dark;
-};
-
-export const getWorstColor: () => string = () => {
-  const theme = useTheme();
-
-  return theme.mode === 'light' ? theme.error.main : theme.error.dark;
-};
-
-export const getLogoColorPrimary: () => string = () => {
-  const theme = useTheme();
-
-  // return theme.mode === 'light' ? '#fd35ab' : '#FDD835';
-  return theme.mode === 'light' ? theme.warning.light : '#FDD835';
-};
-
-export const getLogoColorSecondary: () => string = () => {
-  const theme = useTheme();
-
-  return theme.mode === 'light' ? '#482ab9' : '#2ab92a';
-};
-
-
-class Color {
+export class Color {
   // constructor() {
   // }
 
@@ -427,5 +399,3 @@ class Color {
     return Math.sqrt(dr * dr + dg * dg + db * db);
   }
 }
-
-export default Color;

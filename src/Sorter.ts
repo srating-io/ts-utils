@@ -1,7 +1,7 @@
 /**
  * Table sorting helper utility
  */
-class Sorter {
+export class Sorter {
   public static descendingComparator(a, b, orderBy, direction_?: string): number {
     if ((orderBy in a) && b[orderBy] === null) {
       return 1;
@@ -30,5 +30,3 @@ class Sorter {
       : (a, b) => -this.descendingComparator(a, b, orderBy, direction);
   }
 }
-
-export default Sorter;

@@ -2,7 +2,7 @@
 /**
  * Everything to help with CSV generation
  */
-class CSV {
+export class CSV {
   /**
    * Convert an object to a CSV file and then download it
    */
@@ -40,5 +40,3 @@ class CSV {
     a.remove();
   }
 }
-
-export default CSV;

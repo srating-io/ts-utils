@@ -1,7 +1,7 @@
 
 // コントロール
 
-class Kontororu extends EventTarget {
+export class Kontororu extends EventTarget {
   constructor() {
     super();
     this.listeners = {};
@@ -33,4 +33,4 @@ class Kontororu extends EventTarget {
   }
 }
 
-export default Kontororu;
+

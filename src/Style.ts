@@ -10,7 +10,7 @@ type CSSMap = Map<string, string>;
  * Class to get the style
  * Has base CSS functions
  */
-class Style {
+export class Style {
   public static getStyle() {
     return {
       zIndex: Style.getZIndex(),
@@ -551,6 +551,4 @@ class Style {
     return finalCSS;
   }
 }
-
-export default Style;
 

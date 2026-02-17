@@ -1,6 +1,7 @@
-class Arrayifer {
-  constructor() {
-  }
+
+export class Arrayifier {
+  // constructor() {
+  // }
 
 
   /**
@@ -73,5 +74,3 @@ class Arrayifer {
     return results;
   }
 }
-
-export default Arrayifer;

@@ -2,7 +2,7 @@
 /**
  * Class to get the theme
  */
-class Theme {
+export class Theme {
   public constructor(mode: string) {
     this.mode = mode;
 
@@ -527,6 +527,4 @@ class Theme {
     };
   }
 }
-
-export default Theme;
 
