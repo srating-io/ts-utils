@@ -24,6 +24,10 @@
     "access": "public"
   },
   "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "hhttps://github.com/srating-io/ts-utils"
+  },
   "eslintConfig": {
     "extends": [
       "./eslint.config.mjs"
