@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -20,6 +20,10 @@
       "require": "./dist/index.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "GPL-3.0-or-later",
   "eslintConfig": {
     "extends": [
       "./eslint.config.mjs"
