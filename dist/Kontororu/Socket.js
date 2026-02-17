@@ -1,4 +1,4 @@
-import Kontororu from '../Kontororu';
+import { Kontororu } from '@/Kontororu.js';
 const hostname = process.env.NEXT_PUBLIC_WS_HOST;
 const port = process.env.NEXT_PUBLIC_WS_PORT;
 const path = process.env.NEXT_PUBLIC_WS_PATH;
@@ -200,7 +200,9 @@ class Socket extends Kontororu {
                 console.log(`Connection lost. Retrying in ${delay}ms... (Attempt ${this.reconnect_attempts + 1})`);
             this.reconnect_timeout = setTimeout(() => {
                 this.reconnect_attempts++;
-                this.connect(this.session_id);
+                if (this.session_id) {
+                    this.connect(this.session_id);
+                }
             }, delay);
         }
         this.ws = undefined;

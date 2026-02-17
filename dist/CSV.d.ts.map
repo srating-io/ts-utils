@@ -1,1 +1,1 @@
-{"version":3,"file":"CSV.d.ts","sourceRoot":"","sources":["../src/CSV.ts"],"names":[],"mappings":"AACA;;GAEG;AACH,qBAAa,GAAG;IACd;;OAEG;WACW,QAAQ,CAAC,IAAI,EAAE,MAAM,GAAG,IAAI;CAiC3C"}
+{"version":3,"file":"CSV.d.ts","sourceRoot":"","sources":["../src/CSV.ts"],"names":[],"mappings":"AACA;;GAEG;AACH,qBAAa,GAAG;IACd;;OAEG;WACW,QAAQ,CAAC,IAAI,EAAE,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,CAAC,GAAG,IAAI;CAiC5E"}

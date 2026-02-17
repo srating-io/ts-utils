@@ -10,7 +10,7 @@ export class Arrayifier {
         let currentIndex = array.length;
         let randomIndex;
         // While there remain elements to shuffle.
-        while (currentIndex != 0) {
+        while (currentIndex !== 0) {
             // Pick a remaining element.
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
@@ -33,7 +33,7 @@ export class Arrayifier {
       * @returns Array
       */
     combination(arr, n, r, index, data, i, results) {
-        if (index == r) {
+        if (index === r) {
             const result = [];
             for (let j = 0; j < r; j++) {
                 result.push(data[j]);

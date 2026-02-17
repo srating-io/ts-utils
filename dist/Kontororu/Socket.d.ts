@@ -1,4 +1,4 @@
-import Kontororu from '../Kontororu';
+import { Kontororu } from '@/Kontororu.js';
 type SocketMessage = {
     type: 'subscribe' | 'unsubscribe' | 'data' | 'heartbeat';
     table: string;
@@ -9,11 +9,11 @@ declare class Socket extends Kontororu {
     private connection_state;
     private protocol;
     private url;
-    private session_id;
+    private session_id?;
     private message_queue;
     private reconnect_attempts;
     private should_reconnect;
-    private reconnect_timeout;
+    private reconnect_timeout?;
     private last_heartbeat_timestamp;
     private readonly HEARTBEAT_INTERVAL_MS;
     private readonly SUSPENSION_THRESHOLD_MS;

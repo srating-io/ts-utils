@@ -329,14 +329,15 @@ export class Color {
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
   }
 
-  private static rgbToHsl(r, g, b) {
+  private static rgbToHsl(r: number, g: number, b: number) {
     r /= 255;
     g /= 255;
     b /= 255;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    let h; let s; const
-      l = (max + min) / 2;
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
 
     if (max === min) {
       h = s = 0; // achromatic
@@ -353,7 +354,7 @@ export class Color {
     return [h * 360, s * 100, l * 100];
   }
 
-  private static hslToRgb(h, s, l) {
+  private static hslToRgb(h: number, s: number, l: number) {
     let r;
     let g;
     let b;
@@ -364,7 +365,7 @@ export class Color {
     if (s === 0) {
       r = g = b = l; // achromatic
     } else {
-      const hue2rgb = (p, q, t) => {
+      const hue2rgb = (p: number, q: number, t: number) => {
         if (t < 0) t += 1;
         if (t > 1) t -= 1;
         if (t < 1 / 6) return p + (q - p) * 6 * t;
@@ -388,7 +389,7 @@ export class Color {
     return (r * 299 + g * 587 + b * 114) / 1000;
   }
 
-  private static colorDistance(color1, color2) {
+  private static colorDistance(color1: string, color2: string) {
     const [r1, g1, b1] = Color.hexToRgb(color1);
     const [r2, g2, b2] = Color.hexToRgb(color2);
 

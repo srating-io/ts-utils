@@ -9,12 +9,12 @@ export class Arrayifier {
     * @param {array} array The array to shuffle
     * @return array
     */
-  shuffle(array: Array<any>): Array<any> {
+  shuffle(array: Array<unknown>): Array<unknown> {
     let currentIndex: number = array.length;
     let randomIndex: number;
 
     // While there remain elements to shuffle.
-    while (currentIndex != 0) {
+    while (currentIndex !== 0) {
       // Pick a remaining element.
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
@@ -38,8 +38,8 @@ export class Arrayifier {
     * @param {Array} results
     * @returns Array
     */
-  combination(arr: Array<any>, n: number, r: number, index: number, data: number[], i: number, results: number[][]) {
-    if (index == r) {
+  combination(arr: Array<number>, n: number, r: number, index: number, data: number[], i: number, results: number[][]) {
+    if (index === r) {
       const result: number[] = [];
       for (let j = 0; j < r; j++) {
         result.push(data[j]);
@@ -66,8 +66,8 @@ export class Arrayifier {
     * @param {number} r
     * @returns Array
     */
-  getCombinations(arr: Array<any>, n: number, r: number) {
-    const data: Array<any> = new Array(r);
+  getCombinations(arr: Array<number>, n: number, r: number) {
+    const data: Array<number> = new Array(r);
 
     let results: number[][] = [];
     results = this.combination(arr, n, r, 0, data, 0, results);

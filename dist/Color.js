@@ -273,8 +273,8 @@ export class Color {
         b /= 255;
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
-        let h;
-        let s;
+        let h = 0;
+        let s = 0;
         const l = (max + min) / 2;
         if (max === min) {
             h = s = 0; // achromatic

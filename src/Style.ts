@@ -123,7 +123,7 @@ export class Style {
   private static cssMap: CSSMap = new Map(); // key: className, value: finalCSS
 
   private static hashCSS(css: string | object, debug = false) {
-    const canonicalize = (obj: object): object => {
+    const canonicalize = (obj: object | string | number): object | string | number => {
       if (typeof obj !== 'object' || obj === null) {
         // Return primitives as is
         return obj;
@@ -138,9 +138,12 @@ export class Style {
       const sortedKeys = Object.keys(obj).sort();
       const canonical: { [key: string]: unknown } = {};
 
+      // cast object to record
+      const sourceObj = obj as Record<string, string | number>;
+
       // 2. Build a new object using the sorted keys, and recursively process values
       for (const key of sortedKeys) {
-        canonical[key] = canonicalize(obj[key]);
+        canonical[key] = canonicalize(sourceObj[key]);
       }
 
       return canonical;
@@ -325,8 +328,10 @@ export class Style {
     const objectToLines = (obj: object): string[] => {
       const lines: string[] = [];
 
-      for (const key in obj) {
-        const value = obj[key];
+      const sourceObj = obj as Record<string, unknown>;
+
+      for (const key in sourceObj) {
+        const value = sourceObj[key];
 
         if (typeof value === 'object' && value !== null) {
           lines.push(`${key} {`);

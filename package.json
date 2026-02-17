@@ -1,5 +1,5 @@
 {
-  "name": "ts-utils",
+  "name": "@esmalley/ts-utils",
   "version": "1.0.0",
   "private": false,
   "type": "module",
@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "prepublishOnly": "npm run build"
   },
   "exports": {
     ".": {

@@ -6,7 +6,7 @@ export class CSV {
   /**
    * Convert an object to a CSV file and then download it
    */
-  public static download(data: object): void {
+  public static download(data: Record<string, Record<string, unknown>>): void {
     const rows: string[] = [];
 
     let setHeaders = false;

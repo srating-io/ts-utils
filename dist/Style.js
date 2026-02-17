@@ -114,9 +114,11 @@ export class Style {
             // 1. Get and sort the keys of the current object level
             const sortedKeys = Object.keys(obj).sort();
             const canonical = {};
+            // cast object to record
+            const sourceObj = obj;
             // 2. Build a new object using the sorted keys, and recursively process values
             for (const key of sortedKeys) {
-                canonical[key] = canonicalize(obj[key]);
+                canonical[key] = canonicalize(sourceObj[key]);
             }
             return canonical;
         };
@@ -266,8 +268,9 @@ export class Style {
         // Convert CSS object into flat lines
         const objectToLines = (obj) => {
             const lines = [];
-            for (const key in obj) {
-                const value = obj[key];
+            const sourceObj = obj;
+            for (const key in sourceObj) {
+                const value = sourceObj[key];
                 if (typeof value === 'object' && value !== null) {
                     lines.push(`${key} {`);
                     const nested = objectToLines(value);
