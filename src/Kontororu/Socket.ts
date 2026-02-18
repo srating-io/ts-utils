@@ -1,4 +1,4 @@
-import { Kontororu } from 'src/Kontororu.js';
+import { Kontororu } from '../Kontororu.js';
 
 
 const hostname = process.env.NEXT_PUBLIC_WS_HOST;

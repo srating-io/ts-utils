@@ -2,7 +2,7 @@
 
 
 import { jest } from '@jest/globals';
-import { Dates } from 'src/Dates.js';
+import { Dates } from '../../src/Dates.js';
 
 describe('Dates', () => {
   describe('parse()', () => {

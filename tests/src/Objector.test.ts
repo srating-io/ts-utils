@@ -3,7 +3,7 @@
 /* eslint-disable no-self-compare */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Objector } from 'src/Objector.js';
+import { Objector } from '../../src/Objector.js';
 import { jest } from '@jest/globals';
 
 
