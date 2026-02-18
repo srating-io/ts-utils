@@ -1,4 +1,4 @@
-import { Kontororu } from '@/Kontororu.js';
+import { Kontororu } from 'src/Kontororu.js';
 type SocketMessage = {
     type: 'subscribe' | 'unsubscribe' | 'data' | 'heartbeat';
     table: string;

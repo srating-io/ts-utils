@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.socket = void 0;
-const Kontororu_js_1 = require("@/Kontororu.js");
+const Kontororu_js_1 = require("src/Kontororu.js");
 const hostname = process.env.NEXT_PUBLIC_WS_HOST;
 const port = process.env.NEXT_PUBLIC_WS_PORT;
 const path = process.env.NEXT_PUBLIC_WS_PATH;
