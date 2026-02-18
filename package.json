@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -9,9 +9,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -rf dist && npm run build:esm && npm run build:cjs",
+    "build": "rm -rf dist && npm run build:esm && npm run build:cjs && npm run fix:cjs",
     "build:esm": "tsc -p tsconfig.build.json",
     "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "fix:cjs": "echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "prepublishOnly": "npm run build"
   },
