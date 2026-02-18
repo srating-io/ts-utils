@@ -1,7 +1,8 @@
 // npx jest test
 
-import { Dates } from '@/Dates.js';
+
 import { jest } from '@jest/globals';
+import { Dates } from 'src/Dates.js';
 
 describe('Dates', () => {
   describe('parse()', () => {

@@ -1,4 +1,4 @@
-import { Style } from '@/Style.js';
+import { Style } from 'src/Style.js';
 import { jest } from '@jest/globals';
 
 
