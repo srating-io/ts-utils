@@ -89,7 +89,7 @@ class Socket extends Kontororu {
 
   private get_url() {
     if (!this.config) {
-      throw new Error("Socket not configured");
+      throw new Error('Socket not configured');
     }
 
     const { hostname, port, path } = this.config;
