@@ -1,9 +1,11 @@
 import { Kontororu } from '../Kontororu.js';
 
 
-const hostname = process.env.NEXT_PUBLIC_WS_HOST;
-const port = process.env.NEXT_PUBLIC_WS_PORT;
-const path = process.env.NEXT_PUBLIC_WS_PATH;
+interface SocketConfig {
+  hostname: string;
+  port?: string | number;
+  path: string;
+}
 
 type ConnectionState = 'connected' | 'stale' | 'disconnected' | 'reconnected';
 
@@ -22,13 +24,11 @@ type SocketResponseMessage = {
 const debug = false;
 
 class Socket extends Kontororu {
+  private config?: SocketConfig;
+
   private ws?: WebSocket;
 
   private connection_state: ConnectionState = 'connected';
-
-  private protocol = (typeof window !== 'undefined' && window.location && window.location.protocol && window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-
-  private url = `${this.protocol}//${hostname}${port ? `:${port}` : ''}/${path}`;
 
   private session_id?: string;
 
@@ -87,7 +87,23 @@ class Socket extends Kontororu {
     }
   }
 
-  public connect(session_id: string) {
+  private get_url() {
+    if (!this.config) {
+      throw new Error("Socket not configured");
+    }
+
+    const { hostname, port, path } = this.config;
+
+    const protocol = (typeof window !== 'undefined' && window.location && window.location.protocol && window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}/${path}`;
+  }
+
+  public connect(session_id: string, config?: SocketConfig) {
+    if (config) {
+      this.config = config;
+    }
+
     if (!session_id) {
       console.warn('session_id required to open ws');
       return;
@@ -103,7 +119,7 @@ class Socket extends Kontororu {
       return;
     }
 
-    this.ws = new WebSocket(this.url);
+    this.ws = new WebSocket(this.get_url());
 
     if (debug) console.log('new websocket');
 

@@ -1,17 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.socket = void 0;
-const Kontororu_js_1 = require("src/Kontororu.js");
-const hostname = process.env.NEXT_PUBLIC_WS_HOST;
-const port = process.env.NEXT_PUBLIC_WS_PORT;
-const path = process.env.NEXT_PUBLIC_WS_PATH;
+const Kontororu_js_1 = require("../Kontororu.js");
 const debug = false;
 class Socket extends Kontororu_js_1.Kontororu {
     constructor() {
         super();
         this.connection_state = 'connected';
-        this.protocol = (typeof window !== 'undefined' && window.location && window.location.protocol && window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-        this.url = `${this.protocol}//${hostname}${port ? `:${port}` : ''}/${path}`;
         this.message_queue = [];
         // Reconnection logic
         this.reconnect_attempts = 0;
@@ -53,7 +48,18 @@ class Socket extends Kontororu_js_1.Kontororu {
             window.addEventListener('offline', offlineChecker);
         }
     }
-    connect(session_id) {
+    get_url() {
+        if (!this.config) {
+            throw new Error("Socket not configured");
+        }
+        const { hostname, port, path } = this.config;
+        const protocol = (typeof window !== 'undefined' && window.location && window.location.protocol && window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+        return `${protocol}//${hostname}${port ? `:${port}` : ''}/${path}`;
+    }
+    connect(session_id, config) {
+        if (config) {
+            this.config = config;
+        }
         if (!session_id) {
             console.warn('session_id required to open ws');
             return;
@@ -63,7 +69,7 @@ class Socket extends Kontororu_js_1.Kontororu {
                 this.ws.readyState === WebSocket.CONNECTING)) {
             return;
         }
-        this.ws = new WebSocket(this.url);
+        this.ws = new WebSocket(this.get_url());
         if (debug)
             console.log('new websocket');
         this.session_id = session_id;

@@ -1,14 +1,18 @@
-import { Kontororu } from 'src/Kontororu.js';
+import { Kontororu } from '../Kontororu.js';
+interface SocketConfig {
+    hostname: string;
+    port?: string | number;
+    path: string;
+}
 type SocketMessage = {
     type: 'subscribe' | 'unsubscribe' | 'data' | 'heartbeat';
     table: string;
     id: string;
 };
 declare class Socket extends Kontororu {
+    private config?;
     private ws?;
     private connection_state;
-    private protocol;
-    private url;
     private session_id?;
     private message_queue;
     private reconnect_attempts;
@@ -19,7 +23,8 @@ declare class Socket extends Kontororu {
     private readonly SUSPENSION_THRESHOLD_MS;
     private readonly DISCONNECT_THRESHOLD_MS;
     constructor();
-    connect(session_id: string): void;
+    private get_url;
+    connect(session_id: string, config?: SocketConfig): void;
     /**
      * Send message if the websocket is open,
      * otherwise add it to the message queue
