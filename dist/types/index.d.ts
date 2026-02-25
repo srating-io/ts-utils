@@ -1,5 +1,6 @@
 export * from './Kontororu.js';
 export * from './Kontororu/Socket.js';
+export * from './Arithmetic.js';
 export * from './Arrayifier.js';
 export * from './Color.js';
 export * from './CSV.js';
