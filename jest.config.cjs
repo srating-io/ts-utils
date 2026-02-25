@@ -1,9 +1,6 @@
 
-// dont ask me what this does... AI slop to get this garbage lib to work
 
-import type { Config } from 'jest';
-
-const config: Config = {
+const config = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   // Tell Jest which extensions to treat as ESM
@@ -24,4 +21,4 @@ const config: Config = {
   },
 };
 
-export default config;
+module.exports = config;

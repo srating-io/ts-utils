@@ -299,7 +299,7 @@ describe('Style Class CSS Generation', () => {
     // including the closing brace in the content, leading to double brackets.
     const css = {
       '@keyframes spin': {
-        '100%': { transform: 'rotate(360deg)' }
+        '100%': { transform: 'rotate(360deg)' },
       },
     };
 
@@ -369,11 +369,11 @@ describe('Style Class CSS Generation', () => {
       '&:hover': { color: 'red' },
       '& > div': { margin: 10 },
       '&:nth-child(even)': { background: '#eee' },
-      '&::before': { content: '""', display: 'block' }
+      '&::before': { content: '""', display: 'block' },
     };
     const className = Style.getStyleClassName(css);
     const output = Style.getCSS();
-    
+
     expect(output).toContain(`.${className}:hover { color: red; }`);
     expect(output).toContain(`.${className} > div { margin: 10px; }`);
     expect(output).toContain(`.${className}:nth-child(even) { background: #eee; }`);
@@ -386,7 +386,7 @@ describe('Style Class CSS Generation', () => {
       opacity: 0.5,
       lineHeight: 1.5,
       gridTemplateColumns: 'repeat(3, 1fr)',
-      zIndex: 100
+      zIndex: 100,
     };
     const className = Style.getStyleClassName(css);
     const output = Style.getCSS();
@@ -402,8 +402,8 @@ describe('Style Class CSS Generation', () => {
     const css = {
       '@keyframes slide': {
         from: { top: 0 },
-        to: { top: 100 }
-      }
+        to: { top: 100 },
+      },
     };
     Style.getStyleClassName(css);
     const output = normalize(Style.getCSS());
@@ -421,5 +421,4 @@ describe('Style Class CSS Generation', () => {
 
     expect(classA).toBe(classB);
   });
-
 });

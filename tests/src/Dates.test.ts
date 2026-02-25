@@ -158,7 +158,7 @@ describe('Dates', () => {
       // The manual regex skips complex ISO strings (T, Z), so it falls back to new Date()
       // which handles these correctly.
       const iso = '2025-01-15T10:30:00.000Z';
-      const d = Dates.parse(iso);
+      const d = Dates.parse(iso, true);
       expect(d.toISOString()).toBe(iso);
     });
 
@@ -203,6 +203,16 @@ describe('Dates', () => {
       expect(Dates.format(new Date(2025, 0, 4), 'jS')).toBe('4th');
       expect(Dates.format(new Date(2025, 0, 11), 'jS')).toBe('11th');
       expect(Dates.format(new Date(2025, 0, 21), 'jS')).toBe('21st');
+    });
+
+    it('formats full month and weekday tokens (l, F, j, Y)', () => {
+      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
+      expect(Dates.format(testDate, 'l, F j, Y')).toBe('Sunday, January 25, 2026');
+    });
+
+    it('handles short tokens (M, D, y)', () => {
+      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
+      expect(Dates.format(testDate, 'D, M j, y')).toBe('Sun, Jan 25, 26');
     });
   });
 
