@@ -1,5 +1,5 @@
-export declare class Text {
+export declare class Textor {
     static levenshtein(a: string, b: string): number;
     static toSentenceCase(str: string): string;
 }
-//# sourceMappingURL=Text.d.ts.map
+//# sourceMappingURL=Textor.d.ts.map

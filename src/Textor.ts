@@ -1,5 +1,5 @@
 
-export class Text {
+export class Textor {
   public static levenshtein(a: string, b: string): number {
     const matrix: number[][] = [];
 
