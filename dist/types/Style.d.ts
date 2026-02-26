@@ -1,3 +1,4 @@
+type CSSMap = Map<string, string>;
 /**
  * Class to get the style
  * Has base CSS functions
@@ -52,6 +53,7 @@ export declare class Style {
      * Call this to add css as a style-sheet, so you can do css selectors like hover td {} etc
      */
     static getStyleClassName(cssString: string | object, debug?: boolean): string;
+    static getMap(): CSSMap;
     static getCSS(): string;
     static flush(): void;
     private static styleCache;
@@ -60,4 +62,5 @@ export declare class Style {
     private static injectStyle;
     private static processCSS;
 }
+export {};
 //# sourceMappingURL=Style.d.ts.map
