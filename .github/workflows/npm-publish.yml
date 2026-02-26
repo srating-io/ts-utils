@@ -16,12 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish to npm
+      - name: Set up node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+      
+      - name: Update npm
+        run: npm install -g npm@latest
+      
+      - name: install dev deps
+        run: npm ci
 
-      - run: npm ci
-      - run: npm publish --provenance --access public
+      - name: Publish to npm
+        run: npm publish --provenance --access public
 
