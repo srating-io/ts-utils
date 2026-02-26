@@ -106,6 +106,10 @@ export class Style {
     return className;
   }
 
+  public static getMap() {
+    return this.cssMap;
+  }
+
   // SSR helper to get all collected styles
   public static getCSS(): string {
     console.warn('this does not work yet, in root layout need to add a context thing so it attaches css to style when streamed from server');
@@ -304,14 +308,22 @@ export class Style {
 
       // Only strip quotes if it's NOT a property like 'content'
       if (!requiresQuotes.has(property)) {
-        // Strip leading/trailing double or single quotes
-        // This handles: "Arial" -> Arial or 'Arial' -> Arial
-        if (
-          (value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))
-        ) {
-          value = value.slice(1, -1);
-        }
+        value = value
+          .split(',')
+          .map((part) => {
+            const trimmed = part.trim();
+            // Check if the part is wrapped in quotes
+            const match = trimmed.match(/^["'](.*)["']$/);
+
+            if (match) {
+              const innerValue = match[1];
+              // If there's a space, keep the quotes (e.g., "Segoe UI")
+              // If no space, strip them (e.g., "Arial" -> Arial)
+              return innerValue.includes(' ') ? trimmed : innerValue;
+            }
+            return trimmed;
+          })
+          .join(', ');
       }
 
       value = normalizeValue(property, value);
@@ -361,199 +373,74 @@ export class Style {
     const atRules: string[] = [];
 
     let currentNestedSelector: string | null = null;
-    let insideNestedBlock = false;
-    let nestedBlockLines: string[] = [];
-
     let currentAtRule: string | null = null;
-    let insideAtRule = false;
     let atRuleLines: string[] = [];
     let atRuleBraceCount = 0;
+    let nestedLines: string[] = [];
+    let nestedBraceCount = 0;
 
-    // if (debug) {
-    //   console.log('lines', lines)
-    // }
-
-    // eslint-disable-next-line no-restricted-syntax
     for (const line of lines) {
-      // PRIORITY 1: If we are actively collecting an At-Rule (@media), we consume EVERYTHING
-      // until braces balance. We do NOT check for '&' or property types here, because
-      // they belong to the recursive scope.
-      if (insideAtRule) {
-        // Do not normalize here, accumulate raw lines
+      // 1. AT-RULE HANDLING (@media, @keyframes)
+      if (line.startsWith('@') || currentAtRule) {
+        if (!currentAtRule) currentAtRule = line.split('{')[0].trim();
         atRuleLines.push(line);
-
-        // Count braces to track nesting depth
         atRuleBraceCount += (line.match(/{/g) || []).length;
         atRuleBraceCount -= (line.match(/}/g) || []).length;
 
-        // When we've closed all braces, the at-rule is complete
         if (atRuleBraceCount === 0) {
-          removeLastBrace(atRuleLines);
-          // Recursively process the content inside the media query
-          if (currentAtRule && isNonRecursiveRule(currentAtRule)) {
-            const normalizedBlock = atRuleLines.map((l) => normalizeCSSLine(l)).join('\n');
-            atRules.push(`${currentAtRule} {\n${normalizedBlock}\n}`);
+          const rawBlock = atRuleLines.join('\n');
+          const contentOnly = rawBlock.substring(rawBlock.indexOf('{') + 1, rawBlock.lastIndexOf('}')).trim();
+
+          if (currentAtRule.startsWith('@keyframes')) {
+            // Keyframes: Process units/semicolons but DO NOT wrap in class
+            const processed = contentOnly.split('\n').map((l) => {
+              if (l.includes('{') || l.includes('}')) return l;
+              return normalizeCSSLine(l);
+            }).join(' ');
+            atRules.push(`${currentAtRule} { ${processed} }`);
           } else {
-            const innerCSS = this.processCSS(className, atRuleLines.join('\n'), false, debug);
-            // if (debug) {
-            //   console.log('innerCSS', innerCSS)
-            // }
-            atRules.push(`${currentAtRule} { ${innerCSS} }`);
+            // Media Queries: Recursive call to wrap in class
+            const processed = this.processCSS(className, contentOnly, false, debug);
+            atRules.push(`${currentAtRule} { ${processed} }`);
           }
           currentAtRule = null;
-          insideAtRule = false;
           atRuleLines = [];
         }
         continue;
       }
 
-      // PRIORITY 2: If we are inside a generic nested block (like &:focus), consume lines
-      if (insideNestedBlock) {
-        if (line.includes('}')) {
-          // end nested block
-          insideNestedBlock = false;
-          const beforeBrace = line.split('}')[0].trim();
-          // if (debug) {
-          //   console.log('beforeBrace', beforeBrace)
-          // }
-          if (beforeBrace) {
-            nestedBlockLines.push(normalizeCSSLine(beforeBrace));
+      // 2. NESTED SELECTOR HANDLING (&:hover, ::before)
+      if (line.includes('{') || currentNestedSelector) {
+        if (!currentNestedSelector) {
+          currentNestedSelector = line.split('{')[0].trim();
+          if (currentNestedSelector.startsWith(':') && !currentNestedSelector.startsWith('&')) {
+            currentNestedSelector = `&${currentNestedSelector}`;
           }
+        } else if (!line.includes('}')) {
+          nestedLines.push(normalizeCSSLine(line));
+        }
 
-          if (currentNestedSelector) {
-            // if (debug) {
-            //   console.log('nestedBlockLines', nestedBlockLines)
-            // }
-            nestedRules.push(`${cleanSelector(currentNestedSelector)} { ${nestedBlockLines.join(' ')} }`);
-          }
+        nestedBraceCount += (line.match(/{/g) || []).length;
+        nestedBraceCount -= (line.match(/}/g) || []).length;
 
+        if (nestedBraceCount === 0) {
+          const selector = currentNestedSelector.replace(/&/g, `.${className}`);
+          nestedRules.push(`${selector} { ${nestedLines.join(' ')} }`);
           currentNestedSelector = null;
-          nestedBlockLines = [];
-        } else {
-          nestedBlockLines.push(normalizeCSSLine(line));
+          nestedLines = [];
         }
         continue;
       }
 
-      // PRIORITY 3: Start of a new At-Rule
-      if (line.startsWith('@')) {
-        // Start of at-rule
-        const atRulePart = line.split('{')[0].trim();
-        currentAtRule = atRulePart;
-        atRuleLines = [];
-
-        if (line.includes('{')) {
-          insideAtRule = true;
-          atRuleBraceCount = 1;
-
-          // Add rest of line after '{' if any
-          const afterBrace = line.split('{').slice(1).join('{').trim();
-          if (afterBrace) {
-            // Do not normalize here, keep raw line for recursive processing
-            atRuleLines.push(afterBrace);
-
-            // Check if there are closing braces on same line
-            atRuleBraceCount += (afterBrace.match(/{/g) || []).length;
-            atRuleBraceCount -= (afterBrace.match(/}/g) || []).length;
-
-            if (atRuleBraceCount === 0) {
-              removeLastBrace(atRuleLines);
-              // Recursively process the content inside the media query
-
-              if (isNonRecursiveRule(currentAtRule)) {
-                const normalizedBlock = atRuleLines.map((l) => normalizeCSSLine(l)).join('\n');
-                atRules.push(`${currentAtRule} {\n${normalizedBlock}\n}`);
-              } else {
-                // Pass isRecursive=false to wrap inner properties with the classname
-                const innerCSS = this.processCSS(className, atRuleLines.join('\n'), false, debug);
-                if (debug) {
-                  console.log('innerCSS 2', innerCSS);
-                }
-                atRules.push(`${currentAtRule} { ${innerCSS} }`);
-              }
-              currentAtRule = null;
-              insideAtRule = false;
-              atRuleLines = [];
-            }
-          }
-        }
-        continue;
-      }
-
-      // PRIORITY 4: Start of a new Nested Selector
-      if (line.startsWith('&')) {
-        // Start of nested selector
-        if (currentNestedSelector && nestedBlockLines.length) {
-          nestedRules.push(`${cleanSelector(currentNestedSelector)} { ${nestedBlockLines.join(' ')} }`);
-        }
-
-        // Start new nested selector (grab until first '{' or whole line)
-        const selectorPart = line.split('{')[0].trim();
-        currentNestedSelector = selectorPart;
-        nestedBlockLines = [];
-
-        if (line.includes('{')) {
-          insideNestedBlock = true;
-          // Add rest of line after '{' if any
-          const afterBrace = line.split('{').slice(1).join('{').trim();
-          if (afterBrace) {
-            nestedBlockLines.push(normalizeCSSLine(afterBrace));
-          }
-        }
-        continue;
-      }
-
-      // PRIORITY 5: Standard property
+      // 3. TOP LEVEL PROPERTIES
       topLevelRules.push(normalizeCSSLine(line));
     }
 
-    // Close any remaining nested block
-    if (insideNestedBlock && currentNestedSelector && nestedBlockLines.length) {
-      // if (debug) {
-      //   console.log('nestedBlockLines', nestedBlockLines)
-      // }
-      // if (debug) console.log('zzzzz2', `${cleanSelector(currentNestedSelector)} { ${nestedBlockLines.join(' ')} }`)
-      nestedRules.push(`${cleanSelector(currentNestedSelector)} { ${nestedBlockLines.join(' ')} }`);
-    }
-
-    // Handle edge case where atRule is unfinished (though valid CSS usually isn't)
-    if (currentAtRule && atRuleLines.length) {
-      if (isNonRecursiveRule(currentAtRule)) {
-        const normalizedBlock = atRuleLines.map((l) => normalizeCSSLine(l)).join('\n');
-        atRules.push(`${currentAtRule} {\n${normalizedBlock}\n}`);
-      } else {
-        const innerCSS = this.processCSS(className, atRuleLines.join('\n'), false, debug);
-        atRules.push(`${currentAtRule} { ${innerCSS} }`);
-      }
-    }
-
-    // if (debug) {
-    //   console.log('topLevelRules', topLevelRules)
-    // }
-
-    // Compose final CSS:
-    // Only generate top-level block if it's not recursive AND has actual rules
-    // (If isRecursive is true, we just return the unwrapped rules, expecting the caller to wrap them if needed.
-    // But our recursive calls for media queries now use isRecursive=false, so this logic mostly affects the very root call.)
     const topLevelCSS = (!isRecursive && topLevelRules.length > 0)
       ? `.${className} { ${topLevelRules.join(' ')} }`
-      : topLevelRules.join(' '); // If recursive, return raw properties
+      : topLevelRules.join(' ');
 
-    // Replace & in nested rules with .classname
-    const nestedCSS = nestedRules.map((rule) => rule.replace(/&/g, `.${className}`)).join(' ');
-
-    // atRules already contain full CSS blocks thanks to recursion, but we need to ensure inner & replacement happened
-    // The recursion already handles replacement of & with .classname inside the recursive call!
-    // So we just join them.
-    const atCSS = atRules.join(' ');
-
-    // if (debug) {
-    //   console.log('atRules', atRules);
-    // }
-
-    const finalCSS = `${topLevelCSS} ${nestedCSS} ${atCSS}`.trim();
-
-    return finalCSS;
+    return `${topLevelCSS} ${nestedRules.join(' ')} ${atRules.join(' ')}`.replace(/\s\s+/g, ' ').trim();
   }
 }
 

@@ -421,4 +421,57 @@ describe('Style Class CSS Generation', () => {
 
     expect(classA).toBe(classB);
   });
+
+  test('should handle pseudo-elements in object syntax without adding spaces', () => {
+    const dividerStyle = {
+      display: 'flex',
+      alignItems: 'center',
+      '::before': {
+        content: '""',
+        flex: 1,
+        borderBottom: '1px solid #B3B3B3',
+      },
+    };
+
+    const className = Style.getStyleClassName(dividerStyle);
+    const generatedCSS = Style.getMap().get(className);
+
+    // Verify the main class
+    expect(generatedCSS).toContain(`.${className} { display: flex; align-items: center; }`);
+
+    // Verify the pseudo element (NO space between colons)
+    expect(generatedCSS).toContain(`.${className}::before { content: ""; flex: 1; border-bottom: 1px solid #B3B3B3; }`);
+
+    // Ensure we didn't get the buggy ": :before"
+    expect(generatedCSS).not.toContain(': :before');
+  });
+
+  test('should automatically prefix pseudo-classes with & if missing', () => {
+    const hoverStyle = {
+      color: 'blue',
+      ':hover': {
+        color: 'red',
+      },
+    };
+
+    const className = Style.getStyleClassName(hoverStyle);
+    const generatedCSS = Style.getMap().get(className);
+
+    expect(generatedCSS).toContain(`.${className}:hover { color: red; }`);
+  });
+
+  test('should handle nested objects with camelCase keys correctly', () => {
+    const complexStyle = {
+      backgroundColor: 'white',
+      '& .innerChild': {
+        marginTop: 10,
+      },
+    };
+
+    const className = Style.getStyleClassName(complexStyle);
+    const generatedCSS = Style.getMap().get(className);
+
+    expect(generatedCSS).toContain('background-color: white;');
+    expect(generatedCSS).toContain(`.${className} .innerChild { margin-top: 10px; }`);
+  });
 });
