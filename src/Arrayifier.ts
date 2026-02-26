@@ -9,7 +9,7 @@ export class Arrayifier {
     * @param {array} array The array to shuffle
     * @return array
     */
-  public static shuffle(array: Array<unknown>): Array<unknown> {
+  public static shuffle<T>(array: T[]): T[] {
     let currentIndex: number = array.length;
     let randomIndex: number;
 
@@ -38,13 +38,9 @@ export class Arrayifier {
     * @param {Array} results
     * @returns Array
     */
-  public static combination(arr: Array<number>, n: number, r: number, index: number, data: number[], i: number, results: number[][]) {
+  public static combination<T>(arr: T[], n: number, r: number, index: number, data: T[], i: number, results: T[][]) {
     if (index === r) {
-      const result: number[] = [];
-      for (let j = 0; j < r; j++) {
-        result.push(data[j]);
-      }
-      results.push(result);
+      results.push(data.slice(0, r));
       return results;
     }
 
@@ -66,10 +62,10 @@ export class Arrayifier {
     * @param {number} r
     * @returns Array
     */
-  public static getCombinations(arr: Array<number>, n: number, r: number) {
-    const data: Array<number> = new Array(r);
+  public static getCombinations<T>(arr: T[], n: number, r: number) {
+    const data: T[] = new Array(r);
 
-    let results: number[][] = [];
+    let results: T[][] = [];
     results = this.combination(arr, n, r, 0, data, 0, results);
     return results;
   }
