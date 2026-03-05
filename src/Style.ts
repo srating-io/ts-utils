@@ -36,7 +36,7 @@ export class Style {
       width: '100%',
       display: 'flex',
       justifyContent: 'center',
-      zIndex: Style.getZIndex().drawer,
+      zIndex: Style.getZIndex().appBar,
       position: 'fixed',
       overflowX: 'scroll',
       overflowY: 'hidden',
