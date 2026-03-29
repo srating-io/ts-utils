@@ -1,5 +1,8 @@
 export declare class Dates {
     static parse(str?: Date | string | number | undefined | null, utc?: boolean): Date;
+    /**
+     * Get the utc of a current date or now
+     */
     static utc(date: Date | string | number): Date;
     static getMonthsShort(): string[];
     static getMonths(): string[];

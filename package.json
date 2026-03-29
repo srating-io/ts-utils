@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "6.2.1",
+  "version": "6.2.2",
   "private": false,
   "type": "module",
   "main": "./dist/esm/index.js",
@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
+    "prebuild": "node scripts/generate-exports.js",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist/types",
     "build:js": "node build.mjs",
     "build": "npm run clean && npm run build:types && npm run build:js && npm run fix:cjs",

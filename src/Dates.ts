@@ -111,6 +111,9 @@ export class Dates {
     return new Date();
   }
 
+  /**
+   * Get the utc of a current date or now
+   */
   public static utc(date: Date | string | number): Date {
     const d = this.parse(date);
     return new Date(d.getTime() + (d.getTimezoneOffset() * 60000));
