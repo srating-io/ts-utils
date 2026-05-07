@@ -8,7 +8,7 @@ const pkg = JSON.parse(await readFile(new URL('./package.json', import.meta.url)
 // so they aren't bundled into your library
 const external = [
   ...Object.keys(pkg.dependencies || {}),
-  ...Object.keys(pkg.peerDependencies || {}),
+  ...Object.keys(pkg.devDependencies || {}),
 ];
 
 const sharedConfig = {
