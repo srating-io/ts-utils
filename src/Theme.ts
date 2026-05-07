@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
+export type ThemeType = ReturnType<Theme['getTheme']>;
+
 /**
  * Class to get the theme
  */
