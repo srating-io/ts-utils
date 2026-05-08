@@ -24,7 +24,7 @@ export interface ToastItem {
 // Define the shape of the listener function
 export type ToastListener = (toasts: ToastItem[]) => void;
 
-class Toaster {
+export class Toaster {
   private listeners: ToastListener[] = [];
 
   private toasts: ToastItem[] = [];
