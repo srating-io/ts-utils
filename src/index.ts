@@ -2,8 +2,8 @@
 
 export * from './Arithmetic.js';
 export * from './Arrayifier.js';
-export * from './Color.js';
 export * from './CSV.js';
+export * from './Color.js';
 export * from './Dates.js';
 export * from './Kontororu/Socket.js';
 export * from './Kontororu.js';
