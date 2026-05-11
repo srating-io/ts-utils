@@ -427,7 +427,17 @@ export class Style {
       if (line.includes('{') || currentNestedSelector) {
         if (!currentNestedSelector) {
           currentNestedSelector = line.split('{')[0].trim();
-          if (currentNestedSelector.startsWith(':') && !currentNestedSelector.startsWith('&')) {
+
+          // Identify "Highlight Pseudo-elements" that need global scoping for Safari/WebKit compatibility
+          const isHighlightPseudo = /::(selection|target-text|highlight|spelling-error|grammar-error)/.test(currentNestedSelector);
+
+          // Standard behavior: auto-prefix with '&' if it starts with ':'
+          // Special behavior: If it's a Highlight Pseudo, we leave it alone so it stays global
+          if (
+            currentNestedSelector.startsWith(':') &&
+            !currentNestedSelector.startsWith('&') &&
+            !isHighlightPseudo
+          ) {
             currentNestedSelector = `&${currentNestedSelector}`;
           }
         } else if (!line.includes('}')) {
@@ -438,7 +448,14 @@ export class Style {
         nestedBraceCount -= (line.match(/}/g) || []).length;
 
         if (nestedBraceCount === 0) {
-          const selector = currentNestedSelector.replace(/&/g, `.${className}`);
+          const isHighlightPseudo = /::(selection|target-text|highlight|spelling-error|grammar-error)/.test(currentNestedSelector);
+
+          // If it's a Highlight Pseudo, we DON'T prefix with the .className.
+          // This makes it global, which is required for Safari to render it correctly.
+          const selector = isHighlightPseudo
+            ? currentNestedSelector
+            : currentNestedSelector.replace(/&/g, `.${className}`);
+
           nestedRules.push(`${selector} { ${nestedLines.join(' ')} }`);
           currentNestedSelector = null;
           nestedLines = [];
