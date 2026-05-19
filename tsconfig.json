@@ -5,7 +5,6 @@
     "isolatedModules": true,
     "target": "ES2020",
     "strict": true,
-    "baseUrl": ".",
     "noEmit": true,
     "types": ["node", "jest"],
   },

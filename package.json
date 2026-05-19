@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "6.2.8",
+  "version": "6.2.9",
   "private": false,
   "type": "module",
   "main": "./dist/esm/index.js",
@@ -10,13 +10,14 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "prebuild": "node scripts/generate-exports.js",
+    "prebuild": "node scripts/generate-exports.js && node scripts/jsr-config.js",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist/types",
     "build:js": "node build.mjs",
     "build": "npm run clean && npm run build:types && npm run build:js && npm run fix:cjs",
     "fix:cjs": "node -e \"require('fs').writeFileSync('dist/cjs/package.json', JSON.stringify({type:'commonjs'}))\"",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "publish:jsr": "npx jsr publish"
   },
   "exports": {
     ".": {
