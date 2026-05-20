@@ -20,18 +20,44 @@
 
 type CSSMap = Map<string, string>;
 
+interface ZIndexConfig {
+  appBar: number;
+  drawer: number;
+  fab: number;
+  calendar: number;
+  mobileStepper: number;
+  modal: number;
+  toast: number;
+  speedDial: number;
+  tooltip: number;
+}
+
+interface StyleConfig {
+  zIndex: ZIndexConfig;
+}
+
+interface NavBarStyle {
+  width: string;
+  display: string;
+  justifyContent: string;
+  zIndex: number;
+  position: string;
+  overflowX: string;
+  overflowY: string;
+  scrollbarWidth: string;
+}
+
 /**
- * Class to get the style
- * Has base CSS functions
+ * CSS in JS processor and other random style functions
  */
 export class Style {
-  public static getStyle() {
+  public static getStyle(): StyleConfig {
     return {
       zIndex: Style.getZIndex(),
     };
   }
 
-  public static getZIndex() {
+  public static getZIndex(): ZIndexConfig {
     return {
       appBar: 1100,
       drawer: 1200,
@@ -45,7 +71,7 @@ export class Style {
     };
   }
 
-  public static getNavBar() {
+  public static getNavBar(): NavBarStyle {
     return {
       width: '100%',
       display: 'flex',
@@ -108,7 +134,7 @@ export class Style {
   /**
    * Call this to add css as a style-sheet, so you can do css selectors like hover td {} etc
    */
-  public static getStyleClassName(cssString: string | object, debug = false) {
+  public static getStyleClassName(cssString: string | object, debug = false): string {
     if (debug) {
       console.log('getStyleClassName', cssString);
     }
@@ -120,7 +146,7 @@ export class Style {
     return className;
   }
 
-  public static getMap() {
+  public static getMap(): CSSMap {
     return this.cssMap;
   }
 
@@ -140,7 +166,7 @@ export class Style {
 
   private static cssMap: CSSMap = new Map(); // key: className, value: finalCSS
 
-  private static hashCSS(css: string | object, debug = false) {
+  private static hashCSS(css: string | object, debug = false): string {
     const canonicalize = (obj: object | string | number): object | string | number => {
       if (typeof obj !== 'object' || obj === null) {
         // Return primitives as is

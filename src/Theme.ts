@@ -14,6 +14,112 @@
 
 export type ThemeType = ReturnType<Theme['getTheme']>;
 
+// all these types are for jsr / deno because it cant use the dynamic one above >.>
+
+interface ColorScale {
+  50: string;
+  100: string;
+  200: string;
+  300: string;
+  400: string;
+  500: string;
+  600: string;
+  700: string;
+  800: string;
+  900: string;
+  A100: string;
+  A200: string;
+  A400: string;
+  A700: string;
+}
+
+interface BrownScale {
+  50: string;
+  100: string;
+  200: string;
+  300: string;
+  400: string;
+  500: string;
+  600: string;
+  700: string;
+  800: string;
+  900: string;
+}
+
+interface ColorGroup {
+  main: string;
+  light: string;
+  dark: string;
+}
+
+interface ColorGroupWithContrast extends ColorGroup {
+  contrastText: string;
+}
+
+interface ActionConfig {
+  active: string;
+  disabled: string;
+  disabledBackground: string;
+  disabledOpacity: number;
+  focus: string;
+  focusOpacity: number;
+  hover: string;
+  hoverOpacity: number;
+  selected: string;
+  selectedOpacity: number;
+}
+
+interface ColorPalette {
+  grey: ColorScale;
+  red: ColorScale;
+  pink: ColorScale;
+  purple: ColorScale;
+  deepPurple: ColorScale;
+  indigo: ColorScale;
+  blue: ColorScale;
+  lightBlue: ColorScale;
+  cyan: ColorScale;
+  teal: ColorScale;
+  green: ColorScale;
+  lightGreen: ColorScale;
+  lime: ColorScale;
+  yellow: ColorScale;
+  amber: ColorScale;
+  orange: ColorScale;
+  deepOrange: ColorScale;
+  brown: BrownScale;
+}
+
+interface DarkTheme extends ColorPalette {
+  mode: 'dark';
+  background: { main: string };
+  header: { main: string };
+  primary: ColorGroup;
+  secondary: ColorGroup;
+  warning: ColorGroup;
+  success: ColorGroup;
+  error: ColorGroup;
+  info: ColorGroup;
+  text: { primary: string; secondary: string; disabled: string; icon: string };
+  link: { primary: string };
+  action: ActionConfig;
+}
+
+interface LightTheme extends ColorPalette {
+  mode: 'light';
+  background: { main: string; light: string };
+  header: { main: string };
+  primary: ColorGroupWithContrast;
+  secondary: ColorGroupWithContrast;
+  warning: ColorGroupWithContrast;
+  success: ColorGroupWithContrast;
+  error: ColorGroupWithContrast;
+  info: ColorGroupWithContrast;
+  text: { primary: string; secondary: string; disabled: string };
+  link: { primary: string };
+  action: ActionConfig;
+}
+
 /**
  * Class to get the theme
  */
@@ -28,7 +134,7 @@ export class Theme {
 
   private mode: string;
 
-  public getTheme() {
+  public getTheme(): DarkTheme | LightTheme {
     if (this.mode === 'light') {
       return this.getLightTheme();
     }
@@ -36,7 +142,7 @@ export class Theme {
     return this.getDarkTheme();
   }
 
-  public getDarkTheme() {
+  public getDarkTheme(): DarkTheme {
     return {
       mode: 'dark',
       background: {
@@ -117,7 +223,7 @@ export class Theme {
     };
   }
 
-  public getLightTheme() {
+  public getLightTheme(): LightTheme {
     return {
       mode: 'light',
       background: {
@@ -204,7 +310,7 @@ export class Theme {
     };
   }
 
-  private getGrey() {
+  private getGrey(): ColorScale {
     return {
       50: '#fafafa',
       100: '#f5f5f5',
@@ -223,7 +329,7 @@ export class Theme {
     };
   }
 
-  private getRed() {
+  private getRed(): ColorScale {
     return {
       50: '#ffebee',
       100: '#ffcdd2',
@@ -242,7 +348,7 @@ export class Theme {
     };
   }
 
-  private getPink() {
+  private getPink(): ColorScale {
     return {
       50: '#fce4ec',
       100: '#f8bbd0',
@@ -261,7 +367,7 @@ export class Theme {
     };
   }
 
-  private getPurple() {
+  private getPurple(): ColorScale {
     return {
       50: '#f3e5f5',
       100: '#e1bee7',
@@ -280,7 +386,7 @@ export class Theme {
     };
   }
 
-  private getDeepPurple() {
+  private getDeepPurple(): ColorScale {
     return {
       50: '#ede7f6',
       100: '#d1c4e9',
@@ -299,7 +405,7 @@ export class Theme {
     };
   }
 
-  private getIndigo() {
+  private getIndigo(): ColorScale {
     return {
       50: '#e8eaf6',
       100: '#c5cae9',
@@ -318,7 +424,7 @@ export class Theme {
     };
   }
 
-  private getBlue() {
+  private getBlue(): ColorScale {
     return {
       50: '#e3f2fd',
       100: '#bbdefb',
@@ -337,7 +443,7 @@ export class Theme {
     };
   }
 
-  private getLightBlue() {
+  private getLightBlue(): ColorScale {
     return {
       50: '#e1f5fe',
       100: '#b3e5fc',
@@ -356,7 +462,7 @@ export class Theme {
     };
   }
 
-  private getCyan() {
+  private getCyan(): ColorScale {
     return {
       50: '#e0f7fa',
       100: '#b2ebf2',
@@ -375,7 +481,7 @@ export class Theme {
     };
   }
 
-  private getTeal() {
+  private getTeal(): ColorScale {
     return {
       50: '#e0f2f1',
       100: '#b2dfdb',
@@ -394,7 +500,7 @@ export class Theme {
     };
   }
 
-  private getGreen() {
+  private getGreen(): ColorScale {
     return {
       50: '#e8f5e9',
       100: '#c8e6c9',
@@ -413,7 +519,7 @@ export class Theme {
     };
   }
 
-  private getLightGreen() {
+  private getLightGreen(): ColorScale {
     return {
       50: '#f1f8e9',
       100: '#dcedc8',
@@ -432,7 +538,7 @@ export class Theme {
     };
   }
 
-  private getLime() {
+  private getLime(): ColorScale {
     return {
       50: '#f9fbe7',
       100: '#f0f4c3',
@@ -451,7 +557,7 @@ export class Theme {
     };
   }
 
-  private getYellow() {
+  private getYellow(): ColorScale {
     return {
       50: '#fffde7',
       100: '#fff9c4',
@@ -470,7 +576,7 @@ export class Theme {
     };
   }
 
-  private getAmber() {
+  private getAmber(): ColorScale {
     return {
       50: '#fff8e1',
       100: '#ffecb3',
@@ -489,7 +595,7 @@ export class Theme {
     };
   }
 
-  private getOrange() {
+  private getOrange(): ColorScale {
     return {
       50: '#fff3e0',
       100: '#ffe0b2',
@@ -508,7 +614,7 @@ export class Theme {
     };
   }
 
-  private getDeepOrange() {
+  private getDeepOrange(): ColorScale {
     return {
       50: '#fbe9e7',
       100: '#ffccbc',
@@ -527,7 +633,7 @@ export class Theme {
     };
   }
 
-  private getBrown() {
+  private getBrown(): BrownScale {
     return {
       50: '#efebe9',
       100: '#d7ccc8',

@@ -1,3 +1,6 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable default-case */
+/* eslint-disable no-multi-assign */
 /*
  * Copyright 2026 Evan Smalley.
  *
@@ -52,7 +55,7 @@ export class Color {
   /**
    * Get a color that will look readable based on a background color
    */
-  public static getTextColor(color: string, backgroundColor: string, debug = false) {
+  public static getTextColor(color: string, backgroundColor: string, debug = false): string {
     // Convert hex colors to RGB
     /*
     let [r1, g1, b1] = Color.hexToRgb(color);
@@ -225,7 +228,7 @@ export class Color {
   }
 
 
-  public static shadeColor(hex: string, percent: number) {
+  public static shadeColor(hex: string, percent: number): string {
     let [r, g, b] = Color.hexToRgb(hex);
 
     r = Math.min(255, Math.max(0, Math.round(r + (r * (percent / 100)))));
@@ -243,7 +246,7 @@ export class Color {
    * @param {number} threshold
    * @return {boolean}
    */
-  public static areColorsSimilar(color1: string, color2: string, threshold = 50) {
+  public static areColorsSimilar(color1: string, color2: string, threshold = 50): boolean {
     const distance = Color.colorDistance(color1, color2);
     return distance < threshold;
   }
@@ -254,7 +257,7 @@ export class Color {
    * @param {string} hex
    * @return {string} hex
    */
-  public static invertColor(hex: string) {
+  public static invertColor(hex: string): string {
     const [r, g, b] = Color.hexToRgb(hex);
 
     // Invert each color component
@@ -284,7 +287,7 @@ export class Color {
    * @param {string} hex
    * @return {Array<string>}
    */
-  public static getAnalogousColors(hex: string) {
+  public static getAnalogousColors(hex: string): string[] {
     const [r, g, b] = Color.hexToRgb(hex);
     const [h, s, l] = Color.rgbToHsl(r, g, b);
 
@@ -403,7 +406,7 @@ export class Color {
     return (r * 299 + g * 587 + b * 114) / 1000;
   }
 
-  private static colorDistance(color1: string, color2: string) {
+  private static colorDistance(color1: string, color2: string): number {
     const [r1, g1, b1] = Color.hexToRgb(color1);
     const [r2, g2, b2] = Color.hexToRgb(color2);
 

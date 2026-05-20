@@ -33,7 +33,7 @@ export class Objector {
   // }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public static deepClone<T>(obj: T, memo = new WeakMap<any, any>()): T {
+  public static deepClone<T>(obj: T, memo: WeakMap<any, any> = new WeakMap<any, any>()): T {
     // Check if the input is null or not an object/array
     if (obj === null || typeof obj !== 'object') {
       return obj;
