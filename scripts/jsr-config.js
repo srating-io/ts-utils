@@ -12,5 +12,6 @@ writeFileSync(jsr, JSON.stringify({
   name: pkg.name,
   version: pkg.version,
   license: pkg.license,
+  description: pkg.description,
   exports: './src/index.ts',
 }, null, 2));
