@@ -33,5 +33,5 @@ jobs:
         run: npm publish --provenance --access public
       
       - name: Publish to JSR
-        run: npm run jsr:publish
+        run: npm run publish:jsr
 
