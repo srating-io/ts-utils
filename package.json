@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "6.3.1",
+  "version": "6.3.2",
   "description": "A modular collection of TypeScript utilities for modern web development.",
   "private": false,
   "type": "module",
@@ -18,7 +18,7 @@
     "fix:cjs": "node -e \"require('fs').writeFileSync('dist/cjs/package.json', JSON.stringify({type:'commonjs'}))\"",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "prepublishOnly": "npm run build",
-    "publish:jsr": "node scripts/jsr-config.js && npx jsr publish"
+    "publish:jsr": "node scripts/jsr-config.js && npx jsr publish --allow-dirty"
   },
   "exports": {
     ".": {
