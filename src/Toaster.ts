@@ -30,18 +30,18 @@ export class Toaster {
   private toasts: ToastItem[] = [];
 
   // React component will subscribe to this
-  subscribe(listener: ToastListener) {
+  subscribe(listener: ToastListener): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 
-  notify() {
+  notify(): void {
     this.listeners.forEach((listener) => listener(this.toasts));
   }
 
-  requestClose(id: number) {
+  requestClose(id: number): void {
     this.toasts = this.toasts.map((t) => {
       if (t.id === id) {
         return { ...t, exiting: true };
@@ -51,7 +51,7 @@ export class Toaster {
     this.notify();
   }
 
-  add(message: string, type = 'info') {
+  add(message: string, type = 'info'): void {
     const id = Date.now();
     this.toasts = [...this.toasts, { id, message, type }];
     this.notify();
@@ -62,16 +62,19 @@ export class Toaster {
     }, 4000);
   }
 
-  remove(id: number) {
+  remove(id: number): void {
     this.toasts = this.toasts.filter((t) => t.id !== id);
     this.notify();
   }
 }
 
-export const toaster = new Toaster();
+export const toaster: Toaster = new Toaster();
 
-// Helper function for cleaner usage in your app
-export const toast = {
+export const toast: {
+  info: (msg: string) => void;
+  error: (msg: string) => void;
+  success: (msg: string) => void;
+} = {
   info: (msg: string) => toaster.add(msg, 'info'),
   error: (msg: string) => toaster.add(msg, 'error'),
   success: (msg: string) => toaster.add(msg, 'success'),

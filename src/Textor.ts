@@ -64,7 +64,7 @@ export class Textor {
     paragraphs = 3,
     sentencesPerParagraph = 5,
     startWithLorem = true,
-  ) {
+  ): string {
     const words = [
       'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit',
       'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore',

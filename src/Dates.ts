@@ -178,7 +178,7 @@ export class Dates {
     | `T`   | Timezone abbreviation     | EST     |
     | `e`   | Timezone identifier       | America/New_York |
    */
-  public static format(dateInput: Date | string, format: string) {
+  public static format(dateInput: Date | string, format: string): string {
     const date = this.parse(dateInput);
     const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -287,7 +287,7 @@ export class Dates {
     });
   }
 
-  public static add(date: Date | string, amount: number, unit: 'years' | 'months' | 'days' | 'hours' | 'minutes') {
+  public static add(date: Date | string, amount: number, unit: 'years' | 'months' | 'days' | 'hours' | 'minutes'): Date {
     const d = this.parse(date);
 
     if (unit === 'years') {
@@ -325,11 +325,11 @@ export class Dates {
     date: Date | string,
     amount: number,
     unit: 'years' | 'months' | 'days' | 'hours' | 'minutes',
-  ) {
+  ): Date {
     return this.add(date, -amount, unit);
   }
 
-  public static fromNow(date: Date | string) {
+  public static fromNow(date: Date | string): string {
     const d = this.parse(date);
     const diff = Date.now() - d.getTime();
     const mins = Math.floor(diff / 60000);
@@ -392,24 +392,24 @@ export class Dates {
     return closestDate;
   }
 
-  public static getTodayEST() {
+  public static getTodayEST(): string {
     return this.format(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }), 'Y-m-d');
   }
 
-  public static getStartOfDay(date: Date | string) {
+  public static getStartOfDay(date: Date | string): Date {
     const d = this.parse(date);
     d.setHours(0, 0, 0, 0);
     return d;
   }
 
-  public static getStartOfMonth(date: Date | string) {
+  public static getStartOfMonth(date: Date | string): Date {
     const d = this.parse(date);
     d.setDate(1);
     d.setHours(0, 0, 0, 0);
     return d;
   }
 
-  public static getStartOfGrid(date: Date | string) {
+  public static getStartOfGrid(date: Date | string): Date {
     const d = this.getStartOfMonth(date);
     const dayOfWeek = d.getDay(); // 0 (Sunday) is the start in standard JS
 
@@ -420,7 +420,7 @@ export class Dates {
     return result;
   }
 
-  public static isSameDay(date1: Date | string, date2: Date | string) {
+  public static isSameDay(date1: Date | string, date2: Date | string): boolean {
     if (!date1 || !date2) {
       return false;
     }
@@ -435,7 +435,7 @@ export class Dates {
   }
 
   // Helper to check if one date is before another (ignoring time)
-  public static isBeforeDay(date1: Date | string, date2: Date | string) {
+  public static isBeforeDay(date1: Date | string, date2: Date | string): boolean {
     if (!date1 || !date2) {
       return false;
     }
@@ -443,7 +443,7 @@ export class Dates {
   }
 
   // Helper to check if one date is after another (ignoring time)
-  public static isAfterDay(date1: Date | string, date2: Date | string) {
+  public static isAfterDay(date1: Date | string, date2: Date | string): boolean {
     if (!date1 || !date2) {
       return false;
     }

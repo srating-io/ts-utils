@@ -1,4 +1,4 @@
-name: Publish to npm
+name: Publish to npm and JSR
 
 
 on:
@@ -31,4 +31,7 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
+      
+      - name: Publish to JSR
+        run: npm run publish:jsr
 

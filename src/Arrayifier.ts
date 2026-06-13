@@ -33,6 +33,7 @@ export class Arrayifier {
       currentIndex--;
 
       // And swap it with the current element.
+      // eslint-disable-next-line no-param-reassign
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
     }
@@ -41,17 +42,30 @@ export class Arrayifier {
   }
 
   /**
-    *
-    * @param {Array} arr
-    * @param {number} n
-    * @param {number} r
-    * @param {number} index
-    * @param {Array} data
-    * @param {number} i
-    * @param {Array} results
-    * @returns Array
-    */
-  public static combination<T>(arr: T[], n: number, r: number, index: number, data: T[], i: number, results: T[][]) {
+   * Recursively generates all combinations of size `r` from an array of `n` elements.
+   *
+   * @param {T[]} arr - The source array to generate combinations from
+   * @param {number} n - The total number of elements in `arr` (i.e. arr.length)
+   * @param {number} r - The size of each combination to generate
+   * @param {number} index - Current position being filled in the combination (increments toward r)
+   * @param {T[]} data - Temporary buffer holding the current combination being built
+   * @param {number} i - Current index in `arr` being considered for inclusion
+   * @param {T[][]} results - Accumulator array that collects each completed combination
+   * @returns {T[][]} The accumulated list of all combinations once recursion completes
+   *
+   * @example
+   * combination([1, 2, 3], 3, 2, 0, [], 0, [])
+   * // returns [[1, 2], [1, 3], [2, 3]]
+   */
+  public static combination<T>(
+    arr: T[],
+    n: number,
+    r: number,
+    index: number,
+    data: T[],
+    i: number,
+    results: T[][],
+  ): T[][] {
     if (index === r) {
       results.push(data.slice(0, r));
       return results;
@@ -61,6 +75,7 @@ export class Arrayifier {
       return results;
     }
 
+    // eslint-disable-next-line no-param-reassign
     data[index] = arr[i];
     this.combination(arr, n, r, index + 1, data, i + 1, results);
     this.combination(arr, n, r, index, data, i + 1, results);
@@ -75,7 +90,7 @@ export class Arrayifier {
     * @param {number} r
     * @returns Array
     */
-  public static getCombinations<T>(arr: T[], n: number, r: number) {
+  public static getCombinations<T>(arr: T[], n: number, r: number): T[][] {
     const data: T[] = new Array(r);
 
     let results: T[][] = [];

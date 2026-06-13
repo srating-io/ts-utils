@@ -14,6 +14,8 @@
 
 // コントロール
 
+type Listeners = Array<(...args: unknown[]) => void>;
+
 export class Kontororu extends EventTarget {
   constructor() {
     super();
@@ -21,27 +23,39 @@ export class Kontororu extends EventTarget {
   }
 
   private listeners: {
-    [type: string]: Array<(...args: unknown[]) => void>;
+    [type: string]: Listeners;
   };
 
-  addEventListener(type: string, listener: (...args: unknown[]) => void) {
+  addEventListener(type: string, listener: (...args: unknown[]) => void): this {
     super.addEventListener(type, listener);
 
     if (!this.listeners[type]) {
       this.listeners[type] = [];
     }
     this.listeners[type].push(listener);
+
+    return this;
   }
 
-  removeEventListener(type: string, listener: (...args: unknown[]) => void) {
+  removeEventListener(type: string, listener: (...args: unknown[]) => void): this {
     super.removeEventListener(type, listener);
 
     if (this.listeners[type]) {
       this.listeners[type] = this.listeners[type].filter((l) => l !== listener);
     }
+
+    return this;
   }
 
-  getListeners(type: string) {
+  removeAllEventListeners() {
+    for (const type in this.listeners) {
+      for (let i = 0; i <= this.listeners[type].length; i++) {
+        this.removeEventListener(type, this.listeners[type][i]);
+      }
+    }
+  }
+
+  getListeners(type: string): Listeners | [] {
     return this.listeners[type] || [];
   }
 }
