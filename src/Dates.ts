@@ -128,7 +128,7 @@ export class Dates {
   /**
    * Get the utc of a current date or now
    */
-  public static utc(date: Date | string | number): Date {
+  public static utc(date?: Date | string | number | null): Date {
     const d = this.parse(date);
     return new Date(d.getTime() + (d.getTimezoneOffset() * 60000));
   }
@@ -175,6 +175,8 @@ export class Dates {
     | `F`   | full month name           | March   |
     | `D`   | short weekday             | Mon     |
     | `l`   | full weekday              | Monday  |
+    | `T`   | Timezone abbreviation     | EST     |
+    | `e`   | Timezone identifier       | America/New_York |
    */
   public static format(dateInput: Date | string, format: string) {
     const date = this.parse(dateInput);
@@ -204,6 +206,15 @@ export class Dates {
     const hours = date.getHours(); // 0-23
     const minutes = date.getMinutes();
     const seconds = date.getSeconds();
+
+    // Dynamically look up current runtime/system timezone strings
+    const tzAbbr = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+      .format(date)
+      .split(', ')
+      .pop() || '';
+
+    const tzIdentifier = new Intl.DateTimeFormat('en-US', { timeZoneName: 'long' })
+      .resolvedOptions().timeZone || '';
 
     // Logic for ordinal suffix (st, nd, rd, th)
     const getOrdinalSuffix = (n: number) => {
@@ -260,6 +271,10 @@ export class Dates {
       // AM/PM
       A: hours < 12 ? 'AM' : 'PM',
       a: hours < 12 ? 'am' : 'pm',
+
+      // Timezone
+      T: tzAbbr,
+      e: tzIdentifier,
     };
 
     // Replace tokens using regex
