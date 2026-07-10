@@ -173,50 +173,6 @@ describe('Dates', () => {
   });
 
   describe('format()', () => {
-    it('formats 12-hour time (h:i A) correctly', () => {
-      // Midnight + 5 mins -> 12:05 AM
-      const d = new Date(2025, 0, 1, 0, 5);
-      expect(Dates.format(d, 'h:i A')).toBe('12:05 AM');
-    });
-
-    it('formats 12-hour noon (h:i A) correctly', () => {
-      // Noon -> 12:00 PM
-      const d = new Date(2025, 0, 1, 12, 0);
-      expect(Dates.format(d, 'h:i A')).toBe('12:00 PM');
-    });
-
-    it('formats 24-hour time (H:i) correctly', () => {
-      // 2:05 PM -> 14:05
-      const d = new Date(2025, 0, 1, 14, 5);
-      expect(Dates.format(d, 'H:i')).toBe('14:05');
-    });
-
-    it('formats standard date string (m/d/Y)', () => {
-      const d = new Date(2025, 10, 25); // Nov 25 2025
-      expect(Dates.format(d, 'm/d/Y')).toBe('11/25/2025');
-    });
-
-    it('formats ordinal suffix (S) correctly', () => {
-      expect(Dates.format(new Date(2025, 0, 1), 'jS')).toBe('1st');
-      expect(Dates.format(new Date(2025, 0, 2), 'jS')).toBe('2nd');
-      expect(Dates.format(new Date(2025, 0, 3), 'jS')).toBe('3rd');
-      expect(Dates.format(new Date(2025, 0, 4), 'jS')).toBe('4th');
-      expect(Dates.format(new Date(2025, 0, 11), 'jS')).toBe('11th');
-      expect(Dates.format(new Date(2025, 0, 21), 'jS')).toBe('21st');
-    });
-
-    it('formats full month and weekday tokens (l, F, j, Y)', () => {
-      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
-      expect(Dates.format(testDate, 'l, F j, Y')).toBe('Sunday, January 25, 2026');
-    });
-
-    it('handles short tokens (M, D, y)', () => {
-      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
-      expect(Dates.format(testDate, 'D, M j, y')).toBe('Sun, Jan 25, 26');
-    });
-  });
-
-  describe('format()', () => {
     const date = new Date('2025-03-10T14:05:09Z'); // Monday, March 10, 2025 @ 14:05:09 UTC
 
     const getLocal = (d: Date) => ({
@@ -302,6 +258,107 @@ describe('Dates', () => {
       const noon = new Date(2025, 2, 10, 12, 0, 0);
       expect(Dates.format(noon, 'H')).toBe('12');
       expect(Dates.format(noon, 'A')).toBe('PM');
+    });
+
+    it('formats 12-hour time (h:i A) correctly', () => {
+      // Midnight + 5 mins -> 12:05 AM
+      const d = new Date(2025, 0, 1, 0, 5);
+      expect(Dates.format(d, 'h:i A')).toBe('12:05 AM');
+    });
+
+    it('formats 12-hour noon (h:i A) correctly', () => {
+      // Noon -> 12:00 PM
+      const d = new Date(2025, 0, 1, 12, 0);
+      expect(Dates.format(d, 'h:i A')).toBe('12:00 PM');
+    });
+
+    it('formats 24-hour time (H:i) correctly', () => {
+      // 2:05 PM -> 14:05
+      const d = new Date(2025, 0, 1, 14, 5);
+      expect(Dates.format(d, 'H:i')).toBe('14:05');
+    });
+
+    it('formats standard date string (m/d/Y)', () => {
+      const d = new Date(2025, 10, 25); // Nov 25 2025
+      expect(Dates.format(d, 'm/d/Y')).toBe('11/25/2025');
+    });
+
+    it('formats ordinal suffix (S) correctly', () => {
+      expect(Dates.format(new Date(2025, 0, 1), 'jS')).toBe('1st');
+      expect(Dates.format(new Date(2025, 0, 2), 'jS')).toBe('2nd');
+      expect(Dates.format(new Date(2025, 0, 3), 'jS')).toBe('3rd');
+      expect(Dates.format(new Date(2025, 0, 4), 'jS')).toBe('4th');
+      expect(Dates.format(new Date(2025, 0, 11), 'jS')).toBe('11th');
+      expect(Dates.format(new Date(2025, 0, 21), 'jS')).toBe('21st');
+    });
+
+    it('formats full month and weekday tokens (l, F, j, Y)', () => {
+      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
+      expect(Dates.format(testDate, 'l, F j, Y')).toBe('Sunday, January 25, 2026');
+    });
+
+    it('handles short tokens (M, D, y)', () => {
+      const testDate = new Date('2026-01-25 15:30:05'); // A Sunday in January
+      expect(Dates.format(testDate, 'D, M j, y')).toBe('Sun, Jan 25, 26');
+    });
+  });
+
+  describe('UTC Formatting (utc = true)', () => {
+    // 2025-12-31 21:15:30 EST is 2026-01-01 02:15:30 UTC.
+    // By picking a time that pushes the UTC date into a new day/year,
+    // we can absolutely guarantee the formatter is using the UTC getters.
+    const utcDate = new Date('2026-01-01T02:15:30Z');
+
+    test('formats year, month, and day strictly in UTC', () => {
+      // Even if the local timezone interprets this as Dec 31, 2025,
+      // the UTC output must be Jan 1, 2026.
+      expect(Dates.format(utcDate, 'Y-m-d', true)).toBe('2026-01-01');
+      expect(Dates.format(utcDate, 'y-n-j', true)).toBe('26-1-1');
+      expect(Dates.format(utcDate, 'F jS, Y', true)).toBe('January 1st, 2026');
+      expect(Dates.format(utcDate, 'M j, Y (D)', true)).toBe('Jan 1, 2026 (Thu)');
+    });
+
+    test('formats 24-hour time strictly in UTC', () => {
+      expect(Dates.format(utcDate, 'H:i:s', true)).toBe('02:15:30');
+      expect(Dates.format(utcDate, 'G:i:s', true)).toBe('2:15:30');
+    });
+
+    test('formats 12-hour time and AM/PM strictly in UTC', () => {
+      expect(Dates.format(utcDate, 'h:i:s A', true)).toBe('02:15:30 AM');
+      expect(Dates.format(utcDate, 'g:i a', true)).toBe('2:15 am');
+    });
+
+    test('formats timezone abbreviation and identifier as UTC', () => {
+      expect(Dates.format(utcDate, 'T', true)).toBe('UTC');
+      expect(Dates.format(utcDate, 'e', true)).toBe('UTC');
+    });
+
+    test('afternoon PM conversion in UTC', () => {
+      // 15:45 UTC
+      const pmDate = new Date('2026-01-01T15:45:00Z');
+      expect(Dates.format(pmDate, 'h:i A', true)).toBe('03:45 PM');
+      expect(Dates.format(pmDate, 'H:i', true)).toBe('15:45');
+    });
+
+    test('midnight edge case in UTC', () => {
+      // Exactly 00:00 UTC
+      const midnight = new Date('2026-01-01T00:00:00Z');
+      expect(Dates.format(midnight, 'h:i A', true)).toBe('12:00 AM');
+      expect(Dates.format(midnight, 'H:i', true)).toBe('00:00');
+    });
+
+    test('noon edge case in UTC', () => {
+      // Exactly 12:00 UTC
+      const noon = new Date('2026-01-01T12:00:00Z');
+      expect(Dates.format(noon, 'h:i A', true)).toBe('12:00 PM');
+      expect(Dates.format(noon, 'H:i', true)).toBe('12:00');
+    });
+
+    test('preserves day of the week correctly in UTC', () => {
+      // Jan 1, 2026 is a Thursday (4)
+      expect(Dates.format(utcDate, 'l', true)).toBe('Thursday'); // Full weekday
+      expect(Dates.format(utcDate, 'w', true)).toBe('4'); // 0-6 day of week
+      expect(Dates.format(utcDate, 'N', true)).toBe('4'); // 1-7 ISO day of week
     });
   });
 
@@ -670,6 +727,78 @@ describe('Dates', () => {
         '2024-03-19T00:00:00.000Z',
       ];
       expect(Dates.getClosestDate(dateToMatch, dates)).toBe(dateToMatch);
+    });
+  });
+
+  describe('Grid and Start Helpers', () => {
+    it('getStartOfDay sets time to 00:00:00 local', () => {
+      const d = new Date('2025-05-15T14:30:45');
+      const start = Dates.getStartOfDay(d);
+      expect(start.getFullYear()).toBe(2025);
+      expect(start.getMonth()).toBe(4); // May
+      expect(start.getDate()).toBe(15);
+      expect(start.getHours()).toBe(0);
+      expect(start.getMinutes()).toBe(0);
+    });
+
+    it('getStartOfMonth sets date to 1st and time to 00:00:00', () => {
+      const d = new Date('2025-05-15T14:30:45');
+      const start = Dates.getStartOfMonth(d);
+      expect(start.getFullYear()).toBe(2025);
+      expect(start.getMonth()).toBe(4);
+      expect(start.getDate()).toBe(1);
+      expect(start.getHours()).toBe(0);
+    });
+
+    it('getStartOfGrid correctly finds the preceding Sunday', () => {
+      // May 15, 2025 is a Thursday.
+      // May 1st, 2025 is a Thursday.
+      // The preceding Sunday for the grid start is April 27th, 2025.
+      const d = new Date('2025-05-15T10:00:00');
+      const gridStart = Dates.getStartOfGrid(d);
+
+      expect(gridStart.getFullYear()).toBe(2025);
+      expect(gridStart.getMonth()).toBe(3); // April
+      expect(gridStart.getDate()).toBe(27);
+      expect(gridStart.getDay()).toBe(0); // Sunday
+      expect(gridStart.getHours()).toBe(0);
+    });
+
+    it('does not mutate the original date object in helpers', () => {
+      const original = new Date('2025-05-15T14:30:45');
+      const originalMs = original.getTime();
+
+      Dates.getStartOfMonth(original);
+      Dates.getStartOfDay(original);
+      Dates.getStartOfGrid(original);
+
+      expect(original.getTime()).toBe(originalMs);
+    });
+  });
+
+  describe('Comparison Helpers (isBeforeDay, isAfterDay)', () => {
+    const early = '2025-10-10T08:00:00';
+    const late = '2025-10-10T23:00:00';
+    const nextDay = '2025-10-11T08:00:00';
+
+    it('isBeforeDay evaluates based on calendar day, ignoring time', () => {
+      expect(Dates.isBeforeDay(early, late)).toBe(false); // Same day
+      expect(Dates.isBeforeDay(late, nextDay)).toBe(true); // Different day
+    });
+
+    it('isAfterDay evaluates based on calendar day, ignoring time', () => {
+      expect(Dates.isAfterDay(late, early)).toBe(false); // Same day
+      expect(Dates.isAfterDay(nextDay, late)).toBe(true); // Different day
+    });
+  });
+
+  describe('UTC Parsing Bug Fix Tests', () => {
+    it('forces UTC midnight when strict ISO string is passed with utc flag', () => {
+      const d = Dates.parse('2025-11-03', true);
+      expect(d.getUTCFullYear()).toBe(2025);
+      expect(d.getUTCMonth()).toBe(10);
+      expect(d.getUTCDate()).toBe(3);
+      expect(d.getUTCHours()).toBe(0);
     });
   });
 });

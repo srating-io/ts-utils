@@ -55,7 +55,7 @@ export class Dates {
       // Native JS parses this as UTC Midnight, which often shows as
       // previous day 7pm EST. We force "T00:00:00" to make it Local Midnight.
       if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
-        return new Date(`${input}T00:00:00`);
+        return utc ? new Date(`${input}T00:00:00Z`) : new Date(`${input}T00:00:00`);
       }
 
       // CASE B: Manual Parsing for Complex Strings
@@ -125,14 +125,6 @@ export class Dates {
     return new Date();
   }
 
-  /**
-   * Get the utc of a current date or now
-   */
-  public static utc(date?: Date | string | number | null): Date {
-    const d = this.parse(date);
-    return new Date(d.getTime() + (d.getTimezoneOffset() * 60000));
-  }
-
   public static getMonthsShort(): string[] {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   }
@@ -178,7 +170,7 @@ export class Dates {
     | `T`   | Timezone abbreviation     | EST     |
     | `e`   | Timezone identifier       | America/New_York |
    */
-  public static format(dateInput: Date | string, format: string): string {
+  public static format(dateInput: Date | string, format: string, utc = false): string {
     const date = this.parse(dateInput);
     const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -187,34 +179,27 @@ export class Dates {
     const daysShort = this.getDaysShort();
     const daysLong = this.getDays();
 
-    /*
-    const Y = date.getUTCFullYear();
+    const Y = utc ? date.getUTCFullYear() : date.getFullYear();
     const y = String(Y).slice(-2);
-    const month = date.getUTCMonth(); // 0-11
-    const dateNum = date.getUTCDate(); // 1-31
-    const day = date.getUTCDay(); // 0-6, Sun = 0
-    const hours = date.getUTCHours(); // 0-23
-    const minutes = date.getUTCMinutes();
-    const seconds = date.getUTCSeconds();
-    */
-
-    const Y = date.getFullYear();
-    const y = String(Y).slice(-2);
-    const month = date.getMonth(); // 0-11
-    const dateNum = date.getDate(); // 1-31
-    const day = date.getDay(); // 0-6, Sun = 0
-    const hours = date.getHours(); // 0-23
-    const minutes = date.getMinutes();
-    const seconds = date.getSeconds();
+    const month = utc ? date.getUTCMonth() : date.getMonth();
+    const dateNum = utc ? date.getUTCDate() : date.getDate();
+    const day = utc ? date.getUTCDay() : date.getDay();
+    const hours = utc ? date.getUTCHours() : date.getHours();
+    const minutes = utc ? date.getUTCMinutes() : date.getMinutes();
+    const seconds = utc ? date.getUTCSeconds() : date.getSeconds();
 
     // Dynamically look up current runtime/system timezone strings
-    const tzAbbr = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
-      .format(date)
-      .split(', ')
-      .pop() || '';
+    const tzAbbr = utc
+      ? 'UTC'
+      : new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' })
+        .format(date)
+        .split(', ')
+        .pop() || '';
 
-    const tzIdentifier = new Intl.DateTimeFormat('en-US', { timeZoneName: 'long' })
-      .resolvedOptions().timeZone || '';
+    const tzIdentifier = utc
+      ? 'UTC'
+      : new Intl.DateTimeFormat('en-US', { timeZoneName: 'long' })
+        .resolvedOptions().timeZone || '';
 
     // Logic for ordinal suffix (st, nd, rd, th)
     const getOrdinalSuffix = (n: number) => {
