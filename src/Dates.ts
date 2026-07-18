@@ -455,5 +455,48 @@ export class Dates {
     // If the date's offset is less than the standard offset, it is in DST
     return d.getTimezoneOffset() < standardTimezoneOffset;
   }
+
+  /**
+   * Extracts the exact wall-clock date and time components for a specific timezone.
+   * @param dateInput The date to evaluate (defaults to now)
+   * @param timeZone The target IANA timezone (e.g., 'America/New_York')
+   * @returns An object containing numeric date components (month is 1-12)
+   */
+  public static getPartsInZone(
+    dateInput?: Date | string | number | null,
+    timeZone = 'America/New_York',
+  ): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+    const d = this.parse(dateInput);
+
+    const allTimeZones = Intl.supportedValuesOf('timeZone');
+
+    if (!allTimeZones.includes(timeZone)) {
+      throw new Error('Unsupported timeZone.');
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hourCycle: 'h23',
+    });
+
+    const parts = formatter.formatToParts(d);
+
+    const getPart = (type: Intl.DateTimeFormatPartTypes) => parseInt(parts.find((p) => p.type === type)?.value || '0', 10);
+
+    return {
+      year: getPart('year'),
+      month: getPart('month'), // 1-12 format
+      day: getPart('day'),
+      hour: getPart('hour'), // 0-23 format
+      minute: getPart('minute'),
+      second: getPart('second'),
+    };
+  }
 }
 

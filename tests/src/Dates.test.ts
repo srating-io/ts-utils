@@ -868,4 +868,71 @@ describe('Dates', () => {
       jest.useRealTimers();
     });
   });
+
+  describe('getPartsInZone()', () => {
+    // A specific fixed instant: 2026-06-01T06:30:00Z (6:30 AM UTC)
+    // - In New York (EDT, UTC-4), this is 2026-06-01 at 02:30 AM
+    // - In London (BST, UTC+1), this is 2026-06-01 at 07:30 AM
+    // - In Tokyo (JST, UTC+9), this is 2026-06-01 at 03:30 PM (15:30)
+    const testInstant = new Date('2026-06-01T06:30:00Z');
+
+    it('correctly extracts components for US Eastern Time (EDT)', () => {
+      const parts = Dates.getPartsInZone(testInstant, 'America/New_York');
+
+      expect(parts.year).toBe(2026);
+      expect(parts.month).toBe(6); // June
+      expect(parts.day).toBe(1);
+      expect(parts.hour).toBe(2); // 2 AM
+      expect(parts.minute).toBe(30);
+    });
+
+    it('handles different days across timezones for the same instant', () => {
+      // 2026-05-31T23:30:00Z (11:30 PM UTC)
+      // - In New York (EDT, UTC-4), it is still May 31st (19:30)
+      // - In Tokyo (JST, UTC+9), it has jumped ahead to June 1st (08:30)
+      const boundaryInstant = new Date('2026-05-31T23:30:00Z');
+
+      const nyParts = Dates.getPartsInZone(boundaryInstant, 'America/New_York');
+      const tokyoParts = Dates.getPartsInZone(boundaryInstant, 'Asia/Tokyo');
+
+      // New York verification
+      expect(nyParts.month).toBe(5);
+      expect(nyParts.day).toBe(31);
+      expect(nyParts.hour).toBe(19);
+
+      // Tokyo verification
+      expect(tokyoParts.month).toBe(6);
+      expect(tokyoParts.day).toBe(1);
+      expect(tokyoParts.hour).toBe(8);
+    });
+
+    it('correctly handles midnight as hour 0', () => {
+      // 2026-06-01T04:00:00Z -> Exactly midnight in New York
+      const midnightInstant = new Date('2026-06-01T04:00:00Z');
+      const parts = Dates.getPartsInZone(midnightInstant, 'America/New_York');
+
+      expect(parts.hour).toBe(0);
+      expect(parts.minute).toBe(0);
+    });
+
+    it('defaults to the current time if no date argument is provided', () => {
+      const before = new Date().getTime();
+      const parts = Dates.getPartsInZone(null, 'America/New_York');
+      const after = new Date().getTime();
+
+      // Convert back to a timestamp to ensure it's fresh "now"
+      const generatedDate = new Date(
+        parts.year,
+        parts.month - 1,
+        parts.day,
+        parts.hour,
+        parts.minute,
+      );
+
+      // The runtime's local offset variation might shift the exact hour,
+      // but it should fundamentally represent an active valid time snapshot.
+      expect(generatedDate.getTime()).toBeGreaterThanOrEqual(before - 36000000); // broad zone window
+      expect(generatedDate.getTime()).toBeLessThanOrEqual(after + 36000000);
+    });
+  });
 });
