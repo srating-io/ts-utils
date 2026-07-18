@@ -1,6 +1,6 @@
 {
   "name": "@esmalley/ts-utils",
-  "version": "6.3.7",
+  "version": "6.3.8",
   "description": "A modular collection of TypeScript utilities for modern web development.",
   "private": false,
   "type": "module",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "prebuild": "node scripts/generate-exports.js",
+    "prebuild": "node scripts/generate-tz.js && node scripts/generate-exports.js",
     "build:types": "tsc -p tsconfig.build.json --emitDeclarationOnly --outDir dist/types",
     "build:js": "node build.mjs",
     "build": "npm run clean && npm run build:types && npm run build:js && npm run fix:cjs",

@@ -15,6 +15,8 @@
 /* eslint-disable one-var-declaration-per-line */
 /* eslint-disable one-var */
 
+import { IANATimeZone } from './Timezones.js';
+
 
 export class Dates {
   // constructor() {
@@ -464,7 +466,7 @@ export class Dates {
    */
   public static getPartsInZone(
     dateInput?: Date | string | number | null,
-    timeZone = 'America/New_York',
+    timeZone: IANATimeZone = 'America/New_York',
   ): {
     year: number;
     month: number;

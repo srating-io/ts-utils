@@ -12,4 +12,5 @@ export * from './Sorter.js';
 export * from './Style.js';
 export * from './Textor.js';
 export * from './Theme.js';
+export * from './Timezones.js';
 export * from './Toaster.js';
