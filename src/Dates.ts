@@ -465,7 +465,15 @@ export class Dates {
   public static getPartsInZone(
     dateInput?: Date | string | number | null,
     timeZone = 'America/New_York',
-  ): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+  ): {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+    weekday: string;
+  } {
     const d = this.parse(dateInput);
 
     const allTimeZones = Intl.supportedValuesOf('timeZone');
@@ -482,12 +490,15 @@ export class Dates {
       hour: 'numeric',
       minute: 'numeric',
       second: 'numeric',
+      weekday: 'long', // Adds "Monday", "Tuesday", etc. to the output
       hourCycle: 'h23',
     });
 
     const parts = formatter.formatToParts(d);
 
     const getPart = (type: Intl.DateTimeFormatPartTypes) => parseInt(parts.find((p) => p.type === type)?.value || '0', 10);
+
+    const weekday = parts.find((p) => p.type === 'weekday')?.value || '';
 
     return {
       year: getPart('year'),
@@ -496,6 +507,7 @@ export class Dates {
       hour: getPart('hour'), // 0-23 format
       minute: getPart('minute'),
       second: getPart('second'),
+      weekday,
     };
   }
 }
