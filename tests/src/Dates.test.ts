@@ -1,3 +1,4 @@
+/* eslint-disable no-extend-native */
 // npx jest test
 
 
@@ -799,6 +800,72 @@ describe('Dates', () => {
       expect(d.getUTCMonth()).toBe(10);
       expect(d.getUTCDate()).toBe(3);
       expect(d.getUTCHours()).toBe(0);
+    });
+  });
+
+
+  describe('isDST()', () => {
+    let originalGetTimezoneOffset: () => number;
+
+    beforeAll(() => {
+      // Save the original method to restore it after tests run
+      originalGetTimezoneOffset = Date.prototype.getTimezoneOffset;
+    });
+
+    afterEach(() => {
+      // Clean up the mock after each test block
+      Date.prototype.getTimezoneOffset = originalGetTimezoneOffset;
+    });
+
+    it('returns true during Daylight Saving Time and false during Standard Time', () => {
+      // Mock a US Eastern environment:
+      // Standard Time (Jan) = 300 mins behind UTC. Daylight Time (Jul) = 240 mins behind UTC.
+      Date.prototype.getTimezoneOffset = jest.fn(function (this: Date) {
+        const month = this.getMonth();
+        return month === 6 ? 240 : 300;
+      });
+
+      // July 15th should be recognized as DST (EDT)
+      const summerDate = new Date(2026, 6, 15);
+      expect(Dates.isDST(summerDate)).toBe(true);
+
+      // January 15th should be recognized as Standard Time (EST)
+      const winterDate = new Date(2026, 0, 15);
+      expect(Dates.isDST(winterDate)).toBe(false);
+    });
+
+    it('handles alternative input types (strings and timestamps)', () => {
+      // Force a consistent timezone offset mapping for the test
+      Date.prototype.getTimezoneOffset = jest.fn(function (this: Date) {
+        return this.getMonth() === 6 ? 240 : 300;
+      });
+
+      // Should parse string inputs correctly
+      expect(Dates.isDST('2026-07-15')).toBe(true);
+      expect(Dates.isDST('2026-01-15')).toBe(false);
+
+      // Should parse numerical timestamps correctly
+      const summerTimestamp = new Date(2026, 6, 15).getTime();
+      expect(Dates.isDST(summerTimestamp)).toBe(true);
+    });
+
+    it('defaults to the current date when no input is provided', () => {
+      // 1. Use fake timers to set system "now" to mid-summer without breaking the Date constructor
+      jest.useFakeTimers({
+        now: new Date(2026, 6, 15, 12, 0, 0).getTime(), // July 15, 2026
+      });
+
+      // 2. Mock timezone offsets for a standard US Eastern environment
+      Date.prototype.getTimezoneOffset = jest.fn(function (this: Date) {
+        // 'this' correctly points to the specific date instance being evaluated
+        return this.getMonth() === 6 ? 240 : 300;
+      });
+
+      // 3. This will now correctly evaluate July (240) < January baseline (300)
+      expect(Dates.isDST()).toBe(true);
+
+      // 4. Clean up fake timers so it doesn't bleed into other tests
+      jest.useRealTimers();
     });
   });
 });

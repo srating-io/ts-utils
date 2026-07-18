@@ -434,5 +434,26 @@ export class Dates {
     }
     return this.getStartOfDay(date1).getTime() > this.getStartOfDay(date2).getTime();
   }
+
+  /**
+   * Determines if a given date is observing Daylight Saving Time (DST)
+   * relative to the runtime's local timezone.
+   */
+  public static isDST(dateInput?: Date | string | number | null): boolean {
+    const d = this.parse(dateInput);
+    const year = d.getFullYear();
+
+    // Get the timezone offset for January 1st and July 1st of the same year
+    const janOffset = new Date(year, 0, 1).getTimezoneOffset();
+    const julOffset = new Date(year, 6, 1).getTimezoneOffset();
+
+    // The standard time offset is always the maximum of the two.
+    // Example (New York): EST is 300 mins behind UTC, EDT is 240 mins. Max is 300.
+    // Example (Sydney): AEST is -600 mins, AEDT is -660 mins. Max is -600.
+    const standardTimezoneOffset = Math.max(janOffset, julOffset);
+
+    // If the date's offset is less than the standard offset, it is in DST
+    return d.getTimezoneOffset() < standardTimezoneOffset;
+  }
 }
 
