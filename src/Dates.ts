@@ -524,7 +524,26 @@ export class Dates {
     date1: Date | string | number,
     date2: Date | string | number = new Date(),
     utc = false,
-  ) {
+  ): {
+    milliseconds: number;
+    seconds: number;
+    minutes: number;
+    hours: number;
+    days: number;
+    weeks: number;
+    months: number;
+    years: number;
+    abs: {
+      milliseconds: number;
+      seconds: number;
+      minutes: number;
+      hours: number;
+      days: number;
+      weeks: number;
+      months: number;
+      years: number;
+    }
+  } {
     const d1 = this.parse(date1, utc);
     const d2 = this.parse(date2, utc);
 
