@@ -935,4 +935,119 @@ describe('Dates', () => {
       expect(generatedDate.getTime()).toBeLessThanOrEqual(after + 36000000);
     });
   });
+  describe('Dates.diff', () => {
+    beforeEach(() => {
+      // Freeze system time at a fixed point for deterministic tests when date2 is omitted
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-05T12:00:00.000Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    describe('Basic Time Calculations (date1 > date2)', () => {
+      it('calculates positive differences correctly', () => {
+        const d1 = '2026-01-05T13:30:45.000Z';
+        const d2 = '2026-01-05T12:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.milliseconds).toBe(5445000);
+        expect(result.seconds).toBe(5445);
+        expect(result.minutes).toBe(90);
+        expect(result.hours).toBe(1);
+        expect(result.days).toBe(0);
+        expect(result.weeks).toBe(0);
+      });
+
+      it('calculates multi-day and multi-week differences', () => {
+        const d1 = '2026-01-19T12:00:00.000Z';
+        const d2 = '2026-01-05T12:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.days).toBe(14);
+        expect(result.weeks).toBe(2);
+      });
+    });
+
+    describe('Negative Differences (date1 < date2)', () => {
+      it('returns negative numbers for past dates', () => {
+        const d1 = '2026-01-05T10:30:00.000Z';
+        const d2 = '2026-01-05T12:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.milliseconds).toBe(-5400000);
+        expect(result.minutes).toBe(-90);
+        expect(result.hours).toBe(-1);
+      });
+
+      it('populates absolute values correctly under .abs', () => {
+        const d1 = '2026-01-05T10:30:00.000Z';
+        const d2 = '2026-01-05T12:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.minutes).toBe(-90);
+        expect(result.abs.minutes).toBe(90);
+        expect(result.abs.milliseconds).toBe(5400000);
+      });
+    });
+
+    describe('Calendar Differences (Months and Years)', () => {
+      it('calculates calendar month differences across boundaries', () => {
+        const d1 = '2026-03-15T00:00:00.000Z';
+        const d2 = '2025-11-15T00:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.months).toBe(4);
+        expect(result.years).toBe(1);
+      });
+
+      it('handles negative month/year differences', () => {
+        const d1 = '2024-05-10T00:00:00.000Z';
+        const d2 = '2026-01-10T00:00:00.000Z';
+
+        const result = Dates.diff(d1, d2, true);
+
+        expect(result.months).toBe(-20);
+        expect(result.years).toBe(-2);
+        expect(result.abs.months).toBe(20);
+        expect(result.abs.years).toBe(2);
+      });
+    });
+
+    describe('Default Parameters & Input Formats', () => {
+      it('defaults date2 to current time when omitted', () => {
+        // Mocked system time is 2026-01-05T12:00:00.000Z
+        const futureDate = '2026-01-05T12:15:00.000Z';
+
+        const result = Dates.diff(futureDate, undefined, true);
+
+        expect(result.minutes).toBe(15);
+      });
+
+      it('accepts Date objects, numbers (timestamps), and strings', () => {
+        const d1Date = new Date('2026-01-05T13:00:00.000Z');
+        const d2Timestamp = new Date('2026-01-05T12:00:00.000Z').getTime();
+
+        const result = Dates.diff(d1Date, d2Timestamp, true);
+
+        expect(result.hours).toBe(1);
+      });
+
+      it('returns zero for identical dates', () => {
+        const dateStr = '2026-01-05 12:00:00';
+        const result = Dates.diff(dateStr, dateStr);
+
+        expect(result.milliseconds).toBe(0);
+        expect(result.seconds).toBe(0);
+        expect(result.minutes).toBe(0);
+        expect(result.abs.minutes).toBe(0);
+      });
+    });
+  });
 });

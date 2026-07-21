@@ -512,5 +512,60 @@ export class Dates {
       weekday,
     };
   }
+
+  /**
+   * Calculates the difference between two dates (`date1 - date2`).
+   *
+   * @param date1 Primary date
+   * @param date2 Comparison date (defaults to current time)
+   * @param utc Whether to parse strings as UTC
+   */
+  public static diff(
+    date1: Date | string | number,
+    date2: Date | string | number = new Date(),
+    utc = false,
+  ) {
+    const d1 = this.parse(date1, utc);
+    const d2 = this.parse(date2, utc);
+
+    const ms = d1.getTime() - d2.getTime();
+
+    // Calendar-based month and year differences
+    const y1 = utc ? d1.getUTCFullYear() : d1.getFullYear();
+    const y2 = utc ? d2.getUTCFullYear() : d2.getFullYear();
+    const m1 = utc ? d1.getUTCMonth() : d1.getMonth();
+    const m2 = utc ? d2.getUTCMonth() : d2.getMonth();
+
+    const months = (y1 - y2) * 12 + (m1 - m2);
+    const years = y1 - y2;
+
+    const seconds = Math.trunc(ms / 1000);
+    const minutes = Math.trunc(ms / (1000 * 60));
+    const hours = Math.trunc(ms / (1000 * 60 * 60));
+    const days = Math.trunc(ms / (1000 * 60 * 60 * 24));
+    const weeks = Math.trunc(ms / (1000 * 60 * 60 * 24 * 7));
+
+    return {
+      milliseconds: ms,
+      seconds,
+      minutes,
+      hours,
+      days,
+      weeks,
+      months,
+      years,
+      // Helper containing absolute (positive) values
+      abs: {
+        milliseconds: Math.abs(ms),
+        seconds: Math.abs(seconds),
+        minutes: Math.abs(minutes),
+        hours: Math.abs(hours),
+        days: Math.abs(days),
+        weeks: Math.abs(weeks),
+        months: Math.abs(months),
+        years: Math.abs(years),
+      },
+    };
+  }
 }
 
