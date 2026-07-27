@@ -49,7 +49,7 @@ export class Kontororu extends EventTarget {
 
   removeAllEventListeners() {
     for (const type in this.listeners) {
-      for (let i = 0; i <= this.listeners[type].length; i++) {
+      for (let i = this.listeners[type].length; i >= 0; i--) {
         this.removeEventListener(type, this.listeners[type][i]);
       }
     }
