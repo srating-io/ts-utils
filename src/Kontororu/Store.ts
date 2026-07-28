@@ -12,8 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-import { Kontororu } from './Kontororu.js';
-import { Objector } from './Objector.js';
+import { Kontororu } from '../Kontororu.js';
+import { Objector } from '../Objector.js';
 
 
 export type StoreData = Record<string, Record<string, unknown>>;
