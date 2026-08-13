@@ -17,12 +17,10 @@
 type Merge<T, U> = Omit<T, keyof U> & U;
 
 type MergeAll<T extends object[]> =
-  T extends [infer First, ...infer Rest]
-    ? First extends object
-      ? Rest extends object[]
-        ? Merge<First, MergeAll<Rest>>
-        : First
-      : unknown
+  T extends [infer First extends object, ...infer Rest extends object[]]
+    ? Rest extends []
+      ? First // Base case: If there are no more items, just return the object
+      : Merge<First, MergeAll<Rest>> // Otherwise, keep merging
     : unknown;
 
 /**
