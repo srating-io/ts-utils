@@ -83,7 +83,7 @@ class UuidService {
   /**
    * Convert a UUID string to binary Uint8Array
    */
-  public static uuidToBin(uuid: string): Uint8Array {
+  public uuidToBin(uuid: string): Uint8Array {
     const hex = uuid.replaceAll('-', '');
 
     if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
@@ -102,7 +102,7 @@ class UuidService {
   /**
    * Convert binary Uint8Array/Buffer to formatted UUID string
    */
-  public static binToUuid(buffer: Uint8Array): string {
+  public binToUuid(buffer: Uint8Array): string {
     if (buffer.length !== 16) {
       throw new Error('UUID buffer must contain exactly 16 bytes.');
     }
