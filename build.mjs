@@ -15,6 +15,7 @@ const sharedConfig = {
   entryPoints: ['src/index.ts'], // Adjust this to your entry point
   bundle: true,
   minify: true,
+  platform: 'neutral',
   sourcemap: true,
   external,
   target: 'es2020', // or your browserslist equivalent

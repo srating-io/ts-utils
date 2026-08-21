@@ -13,7 +13,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
-import crypto from 'node:crypto';
 
 /**
  * Generate UUIDv7
@@ -22,7 +21,17 @@ class UuidService {
   private lastTimestamp = -1;
   private seqCounter = 0;
 
-  public generateUUIDv7Buffer(): Buffer {
+  private getRandomBytes(size: number): Uint8Array {
+    if (typeof globalThis.crypto?.getRandomValues === 'function') {
+      const bytes = new Uint8Array(size);
+      globalThis.crypto.getRandomValues(bytes);
+      return bytes;
+    }
+
+    throw new Error('Secure crypto functionality is not available in this environment.');
+  }
+
+  public generateUUIDv7Bytes(): Uint8Array {
     let now = Date.now();
 
     if (now === this.lastTimestamp) {
@@ -49,11 +58,15 @@ class UuidService {
     }
 
     // Allocate 16 random bytes for remaining entropy (rand_b)
-    const buf = crypto.randomBytes(16);
+    const buf = this.getRandomBytes(16);
 
     // 1. Write 48-bit Unix timestamp into bytes 0..5
-    buf.writeUIntBE(Math.floor(now / 0x100000000), 0, 2);
-    buf.writeUIntBE(now % 0x100000000, 2, 4);
+    buf[0] = Math.floor(now / 0x10000000000) & 0xff;
+    buf[1] = Math.floor(now / 0x100000000) & 0xff;
+    buf[2] = (now >>> 24) & 0xff;
+    buf[3] = (now >>> 16) & 0xff;
+    buf[4] = (now >>> 8) & 0xff;
+    buf[5] = now & 0xff;
 
     // 2. Byte 6: Version 7 (0x70) + upper 4 bits of 12-bit counter
     buf[6] = 0x70 | ((this.seqCounter >> 8) & 0x0f);
@@ -68,17 +81,28 @@ class UuidService {
   }
 
   /**
-   * Convert a UUID to binary Buffer
+   * Convert a UUID string to binary Uint8Array
    */
-  public static uuidToBin(uuid: string): Buffer {
-    return Buffer.from(uuid.replaceAll('-', ''), 'hex');
+  public static uuidToBin(uuid: string): Uint8Array {
+    const hex = uuid.replaceAll('-', '');
+    const bytes = new Uint8Array(16);
+
+    for (let i = 0; i < 16; i++) {
+      bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+    }
+
+    return bytes;
   }
 
   /**
-   * Convert binary Buffer to UUID
+   * Convert binary Uint8Array/Buffer to formatted UUID string
    */
-  public static binToUuid(buffer: Buffer): string {
-    const hex = buffer.toString('hex');
+  public static binToUuid(buffer: Uint8Array): string {
+    let hex = '';
+    for (let i = 0; i < buffer.length; i++) {
+      hex += buffer[i].toString(16).padStart(2, '0');
+    }
+
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }
 }
