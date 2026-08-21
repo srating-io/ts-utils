@@ -85,6 +85,11 @@ class UuidService {
    */
   public static uuidToBin(uuid: string): Uint8Array {
     const hex = uuid.replaceAll('-', '');
+
+    if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
+      throw new Error(`Invalid UUID: ${uuid}`);
+    }
+
     const bytes = new Uint8Array(16);
 
     for (let i = 0; i < 16; i++) {
@@ -98,6 +103,9 @@ class UuidService {
    * Convert binary Uint8Array/Buffer to formatted UUID string
    */
   public static binToUuid(buffer: Uint8Array): string {
+    if (buffer.length !== 16) {
+      throw new Error('UUID buffer must contain exactly 16 bytes.');
+    }
     let hex = '';
     for (let i = 0; i < buffer.length; i++) {
       hex += buffer[i].toString(16).padStart(2, '0');
