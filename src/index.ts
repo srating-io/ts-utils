@@ -15,3 +15,4 @@ export * from './Textor.js';
 export * from './Theme.js';
 export * from './Timezones.js';
 export * from './Toaster.js';
+export * from './UuidService.js';
