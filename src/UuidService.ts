@@ -115,4 +115,4 @@ class UuidService {
   }
 }
 // export as a singleton
-export const uuidService = new UuidService();
+export const uuidService: UuidService = new UuidService();
