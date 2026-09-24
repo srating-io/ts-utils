@@ -16,6 +16,8 @@ describe('Style Class CSS Generation', () => {
     // Mock document.createElement and head.appendChild
     styleElement = { textContent: '' };
 
+    // Cast once at the boundary: Style only touches createElement, head and
+    // body, so a full Document stand-in is not worth building.
     global.document = {
       createElement: jest.fn().mockImplementation((tag) => {
         if (tag === 'style') return styleElement;
@@ -26,7 +28,7 @@ describe('Style Class CSS Generation', () => {
       },
       // Mock body if needed for other parts, though Style.ts mostly uses head
       body: {} as HTMLElement,
-    };
+    } as unknown as Document;
 
     // @ts-expect-error -- Ensure window exists so Style thinks it's client-side
     global.window = {};
@@ -99,7 +101,7 @@ describe('Style Class CSS Generation', () => {
     const output = normalize(styleElement.textContent);
 
     // Based on logic: value.slice(1, -1) if not in requiresQuotes
-    expect(output).toContain('font-family: Arial, sans-serif;'); 
+    expect(output).toContain('font-family: Arial, sans-serif;');
     expect(output).toContain('content: "hello";');
   });
 
@@ -473,5 +475,38 @@ describe('Style Class CSS Generation', () => {
 
     expect(generatedCSS).toContain('background-color: white;');
     expect(generatedCSS).toContain(`.${className} .innerChild { margin-top: 10px; }`);
+  });
+});
+
+describe('Style.getShadow', () => {
+  test('returns none at depth 0', () => {
+    expect(Style.getShadow(0)).toBe('none');
+  });
+
+  test('returns a box-shadow string for a mid depth', () => {
+    expect(Style.getShadow(1)).toContain('rgba(0,0,0,0.2)');
+    expect(Style.getShadow(12)).toContain('rgba(0,0,0,0.14)');
+  });
+
+  test('returns a string for every valid depth', () => {
+    for (let depth = 0; depth <= 24; depth++) {
+      expect(typeof Style.getShadow(depth)).toBe('string');
+      expect(Style.getShadow(depth).length).toBeGreaterThan(0);
+    }
+  });
+
+  test('rejects a depth past the end of the table', () => {
+    // The valid range is 0..24 inclusive, so 25 is out of bounds and has to
+    // throw rather than return undefined.
+    expect(() => Style.getShadow(25)).toThrow('max depth is 24');
+    expect(() => Style.getShadow(100)).toThrow('max depth is 24');
+  });
+
+  test('rejects a negative depth', () => {
+    expect(() => Style.getShadow(-1)).toThrow('min depth is 0');
+  });
+
+  test('rejects a fractional depth', () => {
+    expect(() => Style.getShadow(1.5)).toThrow('min depth is 0');
   });
 });

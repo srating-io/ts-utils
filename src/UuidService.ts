@@ -14,12 +14,25 @@
  */
 
 
+// 32 hex digits, with or without the canonical dashes already stripped.
+const HEX_ONLY = /^[0-9a-fA-F]{32}$/;
+
 /**
  * Generate UUIDv7
  */
 class UuidService {
   private lastTimestamp = -1;
   private seqCounter = 0;
+
+  /**
+   * Whether a string is a well-formed UUID, dashed or bare.
+   *
+   * @example
+   * uuidService.isValid('01234567-89ab-7cde-8f01-23456789abcd'); // true
+   */
+  public isValid(uuid: string): boolean {
+    return typeof uuid === 'string' && HEX_ONLY.test(uuid.replaceAll('-', ''));
+  }
 
   private getRandomBytes(size: number): Uint8Array {
     if (typeof globalThis.crypto?.getRandomValues === 'function') {
@@ -84,9 +97,11 @@ class UuidService {
    * Convert a UUID string to binary Uint8Array
    */
   public uuidToBin(uuid: string): Uint8Array {
-    const hex = uuid.replaceAll('-', '');
+    // Stripped once and validated in place: routing through isValid() would
+    // build the same string a second time on every conversion.
+    const hex = typeof uuid === 'string' ? uuid.replaceAll('-', '') : '';
 
-    if (!/^[0-9a-fA-F]{32}$/.test(hex)) {
+    if (!HEX_ONLY.test(hex)) {
       throw new Error(`Invalid UUID: ${uuid}`);
     }
 

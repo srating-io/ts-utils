@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-extend-native */
 // npx jest test
 
@@ -1048,6 +1049,171 @@ describe('Dates', () => {
         expect(result.minutes).toBe(0);
         expect(result.abs.minutes).toBe(0);
       });
+    });
+  });
+});
+
+describe('Dates.format UTC string parsing', () => {
+  // `utc` reaches the parser as well as the getters; parsing local and reading
+  // UTC would shift a date-only string by the local offset.
+  test('formats a date-only string as UTC midnight', () => {
+    expect(Dates.format('2025-01-01', 'Y-m-d H:i:s', true)).toBe('2025-01-01 00:00:00');
+    expect(Dates.format('2025-06-15', 'Y-m-d H:i:s', true)).toBe('2025-06-15 00:00:00');
+  });
+
+  test('agrees with parse() run in UTC mode', () => {
+    const iso = Dates.parse('2025-03-09', true).toISOString();
+
+    expect(Dates.format('2025-03-09', 'Y-m-d', true)).toBe(iso.slice(0, 10));
+  });
+
+  test('formats a date-time string as UTC', () => {
+    expect(Dates.format('2025-01-01 13:45:00', 'Y-m-d H:i', true)).toBe('2025-01-01 13:45');
+  });
+
+  test('still formats date-only strings in local time when utc is false', () => {
+    expect(Dates.format('2025-01-01', 'Y-m-d H:i', false)).toBe('2025-01-01 00:00');
+  });
+});
+
+describe('Dates period helpers', () => {
+  describe('getEndOfDay()', () => {
+    test('returns the last millisecond of the day', () => {
+      const d = Dates.getEndOfDay('2026-03-15 10:30:00');
+      expect(Dates.format(d, 'Y-m-d H:i:s')).toBe('2026-03-15 23:59:59');
+      expect(d.getMilliseconds()).toBe(999);
+    });
+
+    test('is after getStartOfDay for the same date', () => {
+      expect(Dates.getEndOfDay('2026-03-15').getTime())
+        .toBeGreaterThan(Dates.getStartOfDay('2026-03-15').getTime());
+    });
+  });
+
+  describe('getEndOfMonth()', () => {
+    test('lands on the last day of a 31 day month', () => {
+      expect(Dates.format(Dates.getEndOfMonth('2026-01-10'), 'Y-m-d')).toBe('2026-01-31');
+    });
+
+    test('lands on the last day of a 30 day month', () => {
+      expect(Dates.format(Dates.getEndOfMonth('2026-04-10'), 'Y-m-d')).toBe('2026-04-30');
+    });
+
+    test('handles February in a common and a leap year', () => {
+      expect(Dates.format(Dates.getEndOfMonth('2026-02-10'), 'Y-m-d')).toBe('2026-02-28');
+      expect(Dates.format(Dates.getEndOfMonth('2024-02-10'), 'Y-m-d')).toBe('2024-02-29');
+    });
+
+    test('works when called on the last day already', () => {
+      expect(Dates.format(Dates.getEndOfMonth('2026-01-31'), 'Y-m-d')).toBe('2026-01-31');
+    });
+  });
+
+  describe('getDaysInMonth()', () => {
+    test('counts the days in each month length', () => {
+      expect(Dates.getDaysInMonth('2026-01-01')).toBe(31);
+      expect(Dates.getDaysInMonth('2026-04-01')).toBe(30);
+      expect(Dates.getDaysInMonth('2026-02-01')).toBe(28);
+      expect(Dates.getDaysInMonth('2024-02-01')).toBe(29);
+    });
+  });
+
+  describe('getEndOfGrid()', () => {
+    test('returns a Saturday', () => {
+      expect(Dates.getEndOfGrid('2026-03-15').getDay()).toBe(6);
+    });
+
+    test('falls on or after the end of the month', () => {
+      const end = Dates.getEndOfMonth('2026-03-15');
+      expect(Dates.getEndOfGrid('2026-03-15').getTime()).toBeGreaterThanOrEqual(
+        Dates.getStartOfDay(end).getTime(),
+      );
+    });
+
+    test('pairs with getStartOfGrid to make whole weeks', () => {
+      for (const month of ['2026-01-05', '2026-02-05', '2026-03-05', '2026-11-05']) {
+        const days = Dates.eachDayOfInterval(
+          Dates.getStartOfGrid(month),
+          Dates.getEndOfGrid(month),
+        );
+        expect(days.length % 7).toBe(0);
+        expect(days[0].getDay()).toBe(0);
+        expect(days[days.length - 1].getDay()).toBe(6);
+      }
+    });
+  });
+
+  describe('eachDayOfInterval()', () => {
+    test('includes both bounds', () => {
+      const days = Dates.eachDayOfInterval('2026-03-01', '2026-03-05');
+      expect(days).toHaveLength(5);
+      expect(Dates.format(days[0], 'Y-m-d')).toBe('2026-03-01');
+      expect(Dates.format(days[4], 'Y-m-d')).toBe('2026-03-05');
+    });
+
+    test('returns a single day when the bounds match', () => {
+      expect(Dates.eachDayOfInterval('2026-03-01', '2026-03-01')).toHaveLength(1);
+    });
+
+    test('returns nothing when end precedes start', () => {
+      expect(Dates.eachDayOfInterval('2026-03-05', '2026-03-01')).toEqual([]);
+    });
+
+    test('ignores the time of day on the bounds', () => {
+      expect(Dates.eachDayOfInterval('2026-03-01 23:00', '2026-03-02 01:00')).toHaveLength(2);
+    });
+
+    test('crosses a month boundary', () => {
+      const days = Dates.eachDayOfInterval('2026-01-30', '2026-02-02');
+      expect(days.map((d) => Dates.format(d, 'Y-m-d'))).toEqual([
+        '2026-01-30', '2026-01-31', '2026-02-01', '2026-02-02',
+      ]);
+    });
+
+    test('returns local midnights', () => {
+      for (const day of Dates.eachDayOfInterval('2026-03-01', '2026-03-10')) {
+        expect(day.getHours()).toBe(0);
+        expect(day.getMinutes()).toBe(0);
+      }
+    });
+
+    test('spans a full year without drifting', () => {
+      expect(Dates.eachDayOfInterval('2026-01-01', '2026-12-31')).toHaveLength(365);
+      expect(Dates.eachDayOfInterval('2024-01-01', '2024-12-31')).toHaveLength(366);
+    });
+  });
+
+  describe('isBetween()', () => {
+    test('detects a date inside the range', () => {
+      expect(Dates.isBetween('2026-03-05', '2026-03-01', '2026-03-10')).toBe(true);
+    });
+
+    test('rejects a date outside the range', () => {
+      expect(Dates.isBetween('2026-02-05', '2026-03-01', '2026-03-10')).toBe(false);
+      expect(Dates.isBetween('2026-04-05', '2026-03-01', '2026-03-10')).toBe(false);
+    });
+
+    test('includes the bounds by default', () => {
+      expect(Dates.isBetween('2026-03-01', '2026-03-01', '2026-03-10')).toBe(true);
+      expect(Dates.isBetween('2026-03-10', '2026-03-01', '2026-03-10')).toBe(true);
+    });
+
+    test('can exclude the bounds', () => {
+      expect(Dates.isBetween('2026-03-01', '2026-03-01', '2026-03-10', false)).toBe(false);
+      expect(Dates.isBetween('2026-03-05', '2026-03-01', '2026-03-10', false)).toBe(true);
+    });
+
+    test('accepts the bounds in either order', () => {
+      expect(Dates.isBetween('2026-03-05', '2026-03-10', '2026-03-01')).toBe(true);
+    });
+
+    test('compares instants, not calendar days', () => {
+      expect(Dates.isBetween('2026-03-10 12:00', '2026-03-01', '2026-03-10')).toBe(false);
+      expect(Dates.isBetween(
+        '2026-03-10 12:00',
+        Dates.getStartOfDay('2026-03-01'),
+        Dates.getEndOfDay('2026-03-10'),
+      )).toBe(true);
     });
   });
 });

@@ -32,3 +32,6 @@ clientConfig.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# benchmarks (machine-specific timings)
+bench/baseline.json

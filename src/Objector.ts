@@ -42,12 +42,19 @@ export class Objector {
       return memo.get(obj);
     }
 
-    // Handle built-in types
+    // Handle built-in types.
+    // Every branch registers its clone in the memo *before* recursing into
+    // children, so self-referential structures terminate instead of
+    // overflowing the stack, and repeated references stay shared.
     if (obj instanceof Date) {
-      return new Date(obj.getTime()) as unknown as T;
+      const clonedDate = new Date(obj.getTime());
+      memo.set(obj, clonedDate);
+      return clonedDate as unknown as T;
     }
     if (obj instanceof RegExp) {
-      return new RegExp(obj.source, obj.flags) as unknown as T;
+      const clonedRegExp = new RegExp(obj.source, obj.flags);
+      memo.set(obj, clonedRegExp);
+      return clonedRegExp as unknown as T;
     }
     if (obj instanceof Map) {
       const clonedMap = new Map();
@@ -57,17 +64,21 @@ export class Objector {
     }
     if (obj instanceof Set) {
       const newSet = new Set();
+      memo.set(obj, newSet);
       for (const item of obj) {
-        newSet.add(Objector.deepClone(item));
+        newSet.add(Objector.deepClone(item, memo));
       }
       return newSet as unknown as T;
     }
 
     // Handle arrays
     if (Array.isArray(obj)) {
-      const clonedArray = obj.map((item) => Objector.deepClone(item, memo)) as unknown as T;
+      const clonedArray: unknown[] = new Array(obj.length);
       memo.set(obj, clonedArray);
-      return clonedArray;
+      obj.forEach((item, index) => {
+        clonedArray[index] = Objector.deepClone(item, memo);
+      });
+      return clonedArray as unknown as T;
     }
 
     // Handle objects
@@ -101,6 +112,135 @@ export class Objector {
     });
 
     return clonedObj as unknown as T;
+  }
+
+  /**
+   * Structurally compares two values.
+   *
+   * Handles the same shapes `deepClone` does — Date, RegExp, Map, Set, arrays,
+   * plain objects and symbol keys — and tolerates circular references by
+   * remembering which pairs are already being compared.
+   *
+   * NaN equals NaN, and +0 does not equal -0, matching `Object.is` rather than
+   * `===`. Objects must share a prototype to be considered equal.
+   *
+   * @example
+   * Objector.deepEqual({ a: [1, { b: 2 }] }, { a: [1, { b: 2 }] }); // true
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static deepEqual(a: unknown, b: unknown, seen: WeakMap<any, Set<any>> = new WeakMap()): boolean {
+    if (Object.is(a, b)) {
+      return true;
+    }
+
+    if (
+      a === null || b === null ||
+      typeof a !== 'object' || typeof b !== 'object'
+    ) {
+      return false;
+    }
+
+    if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) {
+      return false;
+    }
+
+    // Already comparing this exact pair further up the stack: treat as equal
+    // and let the rest of the traversal decide.
+    const pairs = seen.get(a);
+    if (pairs?.has(b)) {
+      return true;
+    }
+    if (pairs) {
+      pairs.add(b);
+    } else {
+      seen.set(a, new Set([b]));
+    }
+
+    if (a instanceof Date) {
+      return a.getTime() === (b as Date).getTime();
+    }
+
+    if (a instanceof RegExp) {
+      return a.source === (b as RegExp).source && a.flags === (b as RegExp).flags;
+    }
+
+    if (a instanceof Map) {
+      const other = b as Map<unknown, unknown>;
+
+      if (a.size !== other.size) {
+        return false;
+      }
+
+      return [...a.entries()].every(
+        ([key, value]) => other.has(key) && Objector.deepEqual(value, other.get(key), seen),
+      );
+    }
+
+    if (a instanceof Set) {
+      const other = b as Set<unknown>;
+
+      if (a.size !== other.size) {
+        return false;
+      }
+
+      const remaining = [...other];
+
+      // Members have no keys to match on, so each one is paired against the
+      // first structurally equal member not already claimed.
+      return [...a].every((value) => {
+        const match = remaining.findIndex((candidate) => Objector.deepEqual(value, candidate, seen));
+
+        if (match === -1) {
+          return false;
+        }
+
+        remaining.splice(match, 1);
+        return true;
+      });
+    }
+
+    if (Array.isArray(a)) {
+      const other = b as unknown[];
+
+      if (a.length !== other.length) {
+        return false;
+      }
+
+      return a.every((value, index) => Objector.deepEqual(value, other[index], seen));
+    }
+
+    const aRecord = a as Record<string | symbol, unknown>;
+    const bRecord = b as Record<string | symbol, unknown>;
+
+    const aKeys = Object.keys(aRecord);
+    const bKeys = Object.keys(bRecord);
+
+    if (aKeys.length !== bKeys.length) {
+      return false;
+    }
+
+    const keysMatch = aKeys.every(
+      (key) => Object.prototype.hasOwnProperty.call(bRecord, key) &&
+        Objector.deepEqual(aRecord[key], bRecord[key], seen),
+    );
+
+    if (!keysMatch) {
+      return false;
+    }
+
+    const aSymbols = Object.getOwnPropertySymbols(aRecord)
+      .filter((sym) => Object.prototype.propertyIsEnumerable.call(aRecord, sym));
+    const bSymbols = Object.getOwnPropertySymbols(bRecord)
+      .filter((sym) => Object.prototype.propertyIsEnumerable.call(bRecord, sym));
+
+    if (aSymbols.length !== bSymbols.length) {
+      return false;
+    }
+
+    return aSymbols.every(
+      (sym) => Object.prototype.propertyIsEnumerable.call(bRecord, sym) &&
+        Objector.deepEqual(aRecord[sym], bRecord[sym], seen),
+    );
   }
 
   /**

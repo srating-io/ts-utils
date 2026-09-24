@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: install dev deps
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npx eslint src/ tests/ bench/ scripts/
+
+      # Runs pretest, so the typecheck above is belt and braces; keeping it
+      # separate means a type error is reported as its own failed step.
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

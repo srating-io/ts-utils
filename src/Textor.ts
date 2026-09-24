@@ -13,11 +13,29 @@
  */
 
 export class Textor {
+  /**
+   * Convert camelCase or PascalCase to kebab-case.
+   *
+   * Used to turn CSS-in-JS property names into real CSS properties, but it is
+   * general purpose.
+   *
+   * @example
+   * Textor.toKebabCase('backgroundColor'); // 'background-color'
+   */
+  public static toKebabCase(str: string): string {
+    return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  }
+
   public static levenshtein(a: string, b: string): number {
     const matrix: number[][] = [];
 
-    if (!a || !b) {
-      return 0;
+    // An empty string is `length` edits away from the other string,
+    // not 0 edits away.
+    if (!a) {
+      return b ? b.length : 0;
+    }
+    if (!b) {
+      return a.length;
     }
 
     // Initialize the matrix with base case values

@@ -35,21 +35,20 @@ export class Color {
    * @return {string}
    */
   public static lerpColor(a: string, b: string, amount: number): string {
-    const ah = +a.replace('#', '0x');
-    const ar = ah >> 16;
-    const ag = ah >> 8 & 0xff;
-    const ab = ah & 0xff;
+    // Go through hexToRgb so shorthand (#fff) and invalid input are handled
+    // consistently; parsing '0x' + the raw string treats '#fff' as 0x0fff.
+    const [ar, ag, ab] = Color.hexToRgb(a);
+    const [br, bg, bb] = Color.hexToRgb(b);
 
-    const bh = +b.replace('#', '0x');
-    const br = bh >> 16;
-    const bg = bh >> 8 & 0xff;
-    const bb = bh & 0xff;
+    // Channels have to stay within 0..255: a value outside that range carries
+    // into the neighbouring byte of the packed integer below.
+    const t = Math.min(1, Math.max(0, amount));
 
-    const rr = ar + amount * (br - ar);
-    const rg = ag + amount * (bg - ag);
-    const rb = ab + amount * (bb - ab);
+    const rr = Math.trunc(ar + t * (br - ar));
+    const rg = Math.trunc(ag + t * (bg - ag));
+    const rb = Math.trunc(ab + t * (bb - ab));
 
-    return `#${((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1)}`;
+    return `#${((1 << 24) + (rr << 16) + (rg << 8) + rb).toString(16).slice(1)}`;
   }
 
   /**
@@ -311,7 +310,7 @@ export class Color {
    * @param {string} hex
    * @return {Array} rgb
    */
-  public static hexToRgb(hex: string): Array<number> {
+  public static hexToRgb(hex: string): [number, number, number] {
     // Remove the hash at the start if it's there
     let h = hex.replace(/^#/, '');
 
@@ -320,8 +319,11 @@ export class Color {
       h = h.split('').map((char) => { return char + char; }).join('');
     }
 
-    // Ensure it's a valid 6-character hex code
-    if (h.length !== 6) {
+    // Ensure it's a valid 6-character hex code.
+    // Checking the characters as well as the length matters: parseInt() on a
+    // non-hex string yields NaN, and NaN >> 16 is 0, so an invalid input would
+    // otherwise be silently reported as black.
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) {
       throw new Error(`Invalid hex color format: ${hex}`);
     }
 
@@ -336,17 +338,29 @@ export class Color {
 
 
   /**
-   * Convert rgb to hex
+   * Convert rgb to hex.
+   *
+   * Channels are rounded and clamped to 0..255, so a value outside that range
+   * cannot overflow into the packed integer and produce a malformed string.
+   *
    * @param {number} r
    * @param {number} g
    * @param {number} b
    * @return {string}
    */
-  private static rgbToHex(r: number, g: number, b: number): string {
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+  public static rgbToHex(r: number, g: number, b: number): string {
+    const channel = (value: number) => Math.round(Math.min(255, Math.max(0, value)));
+
+    return `#${((1 << 24) + (channel(r) << 16) + (channel(g) << 8) + channel(b)).toString(16).slice(1).toUpperCase()}`;
   }
 
-  private static rgbToHsl(r: number, g: number, b: number) {
+  /**
+   * Convert rgb to hsl, as [hue 0-360, saturation 0-100, lightness 0-100].
+   *
+   * @example
+   * Color.rgbToHsl(255, 0, 0); // [0, 100, 50]
+   */
+  public static rgbToHsl(r: number, g: number, b: number): [number, number, number] {
     r /= 255;
     g /= 255;
     b /= 255;
@@ -371,7 +385,13 @@ export class Color {
     return [h * 360, s * 100, l * 100];
   }
 
-  private static hslToRgb(h: number, s: number, l: number) {
+  /**
+   * Convert hsl to rgb. Hue wraps, saturation and lightness are 0-100.
+   *
+   * @example
+   * Color.hslToRgb(0, 100, 50); // [255, 0, 0]
+   */
+  public static hslToRgb(h: number, s: number, l: number): [number, number, number] {
     let r;
     let g;
     let b;
@@ -386,8 +406,9 @@ export class Color {
         if (t < 0) t += 1;
         if (t > 1) t -= 1;
         if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 3) return q;
-        if (t < 1 / 2) return p + (q - p) * (2 / 3 - t) * 6;
+        // The plateau runs to 1/2 and the falling edge to 2/3.
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
         return p;
       };
 

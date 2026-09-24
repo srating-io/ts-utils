@@ -29,6 +29,27 @@ export class Toaster {
 
   private toasts: ToastItem[] = [];
 
+  // Monotonic counter. Date.now() collides when two toasts are added inside
+  // the same millisecond, which makes remove()/requestClose() affect every
+  // toast that shares the timestamp.
+  private nextId = 0;
+
+  // How long the UI has to play its exit animation before the toast is
+  // dropped from the list.
+  public static readonly EXIT_ANIMATION_MS = 500;
+
+  // How long a toast stays up before it starts exiting.
+  public static readonly AUTO_DISMISS_MS = 4000;
+
+  /**
+   * The current toasts.
+   *
+   * Returns a copy, so callers cannot mutate the internal list.
+   */
+  getToasts(): ToastItem[] {
+    return [...this.toasts];
+  }
+
   // React component will subscribe to this
   subscribe(listener: ToastListener): () => void {
     this.listeners.push(listener);
@@ -41,7 +62,19 @@ export class Toaster {
     this.listeners.forEach((listener) => listener(this.toasts));
   }
 
+  /**
+   * Start a toast's exit: flag it so the UI can animate, then drop it once the
+   * animation has had time to play.
+   *
+   * Calling this twice for the same toast does not schedule a second removal.
+   */
   requestClose(id: number): void {
+    const target = this.toasts.find((t) => t.id === id);
+
+    if (!target || target.exiting) {
+      return;
+    }
+
     this.toasts = this.toasts.map((t) => {
       if (t.id === id) {
         return { ...t, exiting: true };
@@ -49,21 +82,49 @@ export class Toaster {
       return t;
     });
     this.notify();
+
+    // Safety net, not the primary path. A UI normally removes the toast itself
+    // when its exit animation ends, which is sooner than this. That callback
+    // can fail to arrive though -- a backgrounded tab, an unmount mid-animation,
+    // reduced-motion settings -- and nothing else would ever drop the toast.
+    // remove() is silent when the consumer already handled it.
+    setTimeout(() => {
+      this.remove(id);
+    }, Toaster.EXIT_ANIMATION_MS);
   }
 
-  add(message: string, type = 'info'): void {
-    const id = Date.now();
+  /**
+   * Add a toast and return its id, so callers can dismiss it early.
+   */
+  add(message: string, type = 'info'): number {
+    this.nextId += 1;
+    const id = this.nextId;
     this.toasts = [...this.toasts, { id, message, type }];
     this.notify();
 
     // Auto-remove
     setTimeout(() => {
       this.requestClose(id);
-    }, 4000);
+    }, Toaster.AUTO_DISMISS_MS);
+
+    return id;
   }
 
+  /**
+   * Remove a toast immediately, without waiting for an exit animation.
+   *
+   * Removing an id that is not present is silent: it broadcasts nothing, so a
+   * consumer that has already removed the toast itself does not get a
+   * redundant re-render from the safety-net removal in `requestClose`.
+   */
   remove(id: number): void {
-    this.toasts = this.toasts.filter((t) => t.id !== id);
+    const remaining = this.toasts.filter((t) => t.id !== id);
+
+    if (remaining.length === this.toasts.length) {
+      return;
+    }
+
+    this.toasts = remaining;
     this.notify();
   }
 }

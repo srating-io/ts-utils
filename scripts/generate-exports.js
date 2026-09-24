@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { writeIfChanged } from './write-if-changed.js';
+
 // This file writes the index.ts for me, so I dont have to manually update it
 // This script will run during the prebuild step
 
@@ -17,7 +19,7 @@ function getFiles(dir, allFiles = []) {
     } else if (file.endsWith('.ts') && file !== 'index.ts' && !file.startsWith('_')) {
       // Convert OS-specific paths to web-friendly relative imports
       const relativePath = path.relative(srcDir, filePath)
-        .replace(/\\/g, '/') // Fix Windows backslashes
+        .split(path.sep).join('/')
         .replace('.ts', '.js');
 
       allFiles.push(`export * from './${relativePath}';`);
@@ -28,6 +30,10 @@ function getFiles(dir, allFiles = []) {
 }
 
 const exports = getFiles(srcDir);
-fs.writeFileSync(indexFile, `// Auto-generated barrel file\n\n${exports.join('\n')}\n`);
+const wrote = writeIfChanged(indexFile, `// Auto-generated barrel file\n\n${exports.join('\n')}\n`);
 
-console.log(`Exported ${exports.length} modules to index.ts`);
+console.log(
+  wrote
+    ? `Exported ${exports.length} modules to index.ts`
+    : `index.ts already lists all ${exports.length} modules`,
+);

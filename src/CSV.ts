@@ -17,27 +17,65 @@
  */
 export class CSV {
   /**
+   * Escape a single value for CSV.
+   *
+   * RFC 4180 escapes an embedded quote by doubling it, so JSON.stringify()
+   * (which uses a backslash) cannot be used here.
+   */
+  private static escape(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    const str = String(value);
+
+    if (/[",\r\n]/.test(str)) {
+      return `"${str.replaceAll('"', '""')}"`;
+    }
+
+    return str;
+  }
+
+  /**
+   * Convert an object of rows into a CSV string.
+   *
+   * Headers are the union of every row's keys, so rows that carry extra
+   * columns are not silently truncated to the shape of the first row.
+   */
+  public static stringify(data: Record<string, Record<string, unknown>>): string {
+    const headers: string[] = [];
+    const seen = new Set<string>();
+
+    for (const id in data) {
+      Object.keys(data[id] ?? {}).forEach((key) => {
+        if (!seen.has(key)) {
+          seen.add(key);
+          headers.push(key);
+        }
+      });
+    }
+
+    if (headers.length === 0) {
+      return '';
+    }
+
+    const rows: string[] = [headers.map((header) => CSV.escape(header)).join(',')];
+
+    for (const id in data) {
+      const row = data[id] ?? {};
+      // escape() handles the empty cases itself, so no `||` default here:
+      // 0, false and '' are real values and have to survive as written.
+      rows.push(headers.map((header) => CSV.escape(row[header])).join(','));
+    }
+
+    return rows.join('\n');
+  }
+
+  /**
    * Convert an object to a CSV file and then download it
    */
   public static download(data: Record<string, Record<string, unknown>>): void {
-    const rows: string[] = [];
-
-    let setHeaders = false;
-    let headers: string[] = [];
-    for (const id in data) {
-      const row = data[id];
-
-      if (!setHeaders) {
-        headers = Object.keys(row);
-        rows.push(headers.join(','));
-        setHeaders = true;
-      }
-
-      const values = headers.map((header) => JSON.stringify(row[header] || ''));
-      rows.push(values.join(','));
-    }
-
-    const content = rows.join('\n');
+    const content = CSV.stringify(data);
 
     // Create a Blob and trigger download
     const blob = new Blob([content], { type: 'text/csv' });

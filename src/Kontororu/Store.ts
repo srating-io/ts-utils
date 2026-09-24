@@ -18,6 +18,67 @@ import { Objector } from '../Objector.js';
 
 export type StoreData = Record<string, Record<string, unknown>>;
 
+/**
+ * A query resolved once, ahead of the row scan.
+ *
+ * `values` and `lists` mirror `columns` by index. Resolving them per row costs
+ * a lookup into `args` and an Array.isArray() call for every column of every
+ * row, none of which can change between rows.
+ */
+interface Filter {
+  columns: string[];
+  values: unknown[];
+  lists: boolean[];
+}
+
+function toFilter(args: Record<string, unknown>, skip?: string): Filter {
+  const columns: string[] = [];
+  const values: unknown[] = [];
+  const lists: boolean[] = [];
+
+  for (const column of Object.keys(args)) {
+    if (column === skip) {
+      continue;
+    }
+
+    const value = args[column];
+
+    columns.push(column);
+    values.push(value);
+    lists.push(Array.isArray(value));
+  }
+
+  return { columns, values, lists };
+}
+
+/**
+ * Whether a row satisfies every column of the filter, by strict equality or by
+ * membership when the argument is an array.
+ */
+function matchesRow(row: unknown, { columns, values, lists }: Filter): boolean {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) {
+    return false;
+  }
+
+  const record = row as Record<string, unknown>;
+
+  for (let i = 0; i < columns.length; i++) {
+    const rowValue = record[columns[i]];
+
+    if (rowValue === values[i]) {
+      continue;
+    }
+
+    if (lists[i] && (values[i] as unknown[]).includes(rowValue)) {
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
 export class Store<TStore extends StoreData = StoreData> extends Kontororu {
   private store: TStore = {} as TStore;
 
@@ -48,13 +109,17 @@ export class Store<TStore extends StoreData = StoreData> extends Kontororu {
 
     const primaryKey = `${String(table)}_id`;
 
-    // Fast path: Direct primary key lookup
+    // Fast path: Direct primary key lookup.
+    // Any remaining arguments still have to be applied to the row we found,
+    // otherwise `read('user', { user_id: '1', active: true })` would return
+    // user 1 even when that user is inactive.
     if (primaryKey in args) {
       const id = args[primaryKey] as string;
-      if (data[id]) {
-        return { [id]: Objector.deepClone(data[id]) as TStore[K][string] };
-      }
-      return {};
+      const row = data[id];
+
+      return row && matchesRow(row, toFilter(args, primaryKey))
+        ? { [id]: Objector.deepClone(row) as TStore[K][string] }
+        : {};
     }
 
     // If no arguments are provided, return a deep clone of the entire table
@@ -62,37 +127,17 @@ export class Store<TStore extends StoreData = StoreData> extends Kontororu {
       return Objector.deepClone(data) as Record<string, TStore[K][string]>;
     }
 
+    const filter = toFilter(args);
     const matches: Record<string, TStore[K][string]> = {};
-    const mismatches: Record<string, boolean> = {};
 
+    // Cloning only full matches matters more than the scan itself: a row is
+    // wide, so cloning one that a later column rejects costs far more than
+    // testing all of its columns first.
     for (const id in data) {
-      if (id in mismatches) {
-        continue;
-      }
-
       const row = data[id];
-      if (!row || typeof row !== 'object' || Array.isArray(row)) {
-        continue;
-      }
 
-      for (const column in args) {
-        let match = false;
-        const argVal = args[column];
-        const rowVal = (row as Record<string, unknown>)[column];
-
-        if (rowVal === argVal) {
-          match = true;
-        } else if (Array.isArray(argVal) && argVal.includes(rowVal)) {
-          match = true;
-        }
-
-        if (match) {
-          matches[id] = Objector.deepClone(row) as TStore[K][string];
-        } else {
-          mismatches[id] = true;
-          delete matches[id];
-          break;
-        }
+      if (matchesRow(row, filter)) {
+        matches[id] = Objector.deepClone(row) as TStore[K][string];
       }
     }
 

@@ -17,15 +17,25 @@
  */
 export class Sorter {
   public static descendingComparator(a: Record<string, string | number>, b: Record<string, string | number>, orderBy: string, direction_?: string): number {
-    if ((orderBy in a) && b[orderBy] === null) {
-      return 1;
-    }
-    if (a[orderBy] === null && (orderBy in b)) {
-      return -1;
-    }
-
     const a_value = a[orderBy];
     const b_value = b[orderBy];
+
+    // Null/undefined values always sort to the end, regardless of direction.
+    // Both branches must be checked against the *values* (not key presence),
+    // otherwise two null rows compare as non-equal and the comparator stops
+    // being antisymmetric, which yields an inconsistent sort order.
+    const a_empty = a_value === null || a_value === undefined;
+    const b_empty = b_value === null || b_value === undefined;
+
+    if (a_empty && b_empty) {
+      return 0;
+    }
+    if (b_empty) {
+      return 1;
+    }
+    if (a_empty) {
+      return -1;
+    }
 
     const direction = direction_ || 'lower';
 

@@ -16,6 +16,7 @@
 /* eslint-disable one-var */
 
 import { IANATimeZone } from './Timezones.js';
+import { Numbers } from './Numbers.js';
 
 
 export class Dates {
@@ -173,7 +174,9 @@ export class Dates {
     | `e`   | Timezone identifier       | America/New_York |
    */
   public static format(dateInput: Date | string, format: string, utc = false): string {
-    const date = this.parse(dateInput);
+    // `utc` has to reach the parser too: parsing "2025-01-01" as local midnight
+    // and then reading UTC getters shifts the result by the local offset.
+    const date = this.parse(dateInput, utc);
     const pad = (n: number) => String(n).padStart(2, '0');
 
     const monthsShort = this.getMonthsShort();
@@ -203,30 +206,6 @@ export class Dates {
       : new Intl.DateTimeFormat('en-US', { timeZoneName: 'long' })
         .resolvedOptions().timeZone || '';
 
-    // Logic for ordinal suffix (st, nd, rd, th)
-    const getOrdinalSuffix = (n: number) => {
-      const v = n % 100;
-      // 11th, 12th, 13th are exceptions to the 1st, 2nd, 3rd rule
-      if (v >= 11 && v <= 13) {
-        return 'th';
-      }
-
-      switch (n % 10) {
-        case 1: {
-          return 'st';
-        }
-        case 2: {
-          return 'nd';
-        }
-        case 3: {
-          return 'rd';
-        }
-        default: {
-          return 'th';
-        }
-      }
-    };
-
     const tokens: Record<string, string> = {
       /// Year
       Y: String(Y),
@@ -245,7 +224,7 @@ export class Dates {
       l: daysLong[day],
       w: String(day), // 0 (Sun) - 6
       N: String(day === 0 ? 7 : day), // 1 (Mon) - 7 (Sun)
-      S: getOrdinalSuffix(dateNum),
+      S: Numbers.ordinalSuffix(dateNum),
 
       // Time
       H: pad(hours),
@@ -396,6 +375,33 @@ export class Dates {
     return d;
   }
 
+  /**
+   * The last representable instant of the day, 23:59:59.999 local.
+   */
+  public static getEndOfDay(date: Date | string): Date {
+    const d = this.parse(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }
+
+  /**
+   * The last representable instant of the month.
+   */
+  public static getEndOfMonth(date: Date | string): Date {
+    const d = this.parse(date);
+    // Day 0 of the following month is the last day of this one.
+    d.setMonth(d.getMonth() + 1, 0);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }
+
+  /**
+   * How many days the date's month contains.
+   */
+  public static getDaysInMonth(date: Date | string): number {
+    return this.getEndOfMonth(date).getDate();
+  }
+
   public static getStartOfGrid(date: Date | string): Date {
     const d = this.getStartOfMonth(date);
     const dayOfWeek = d.getDay(); // 0 (Sunday) is the start in standard JS
@@ -405,6 +411,71 @@ export class Dates {
     // Subtract days to get to the start of the week (Sunday)
     result.setDate(d.getDate() - dayOfWeek);
     return result;
+  }
+
+  /**
+   * The Saturday closing the week that contains the end of the month.
+   *
+   * Pairs with `getStartOfGrid` to bound a full month view; feed both into
+   * `eachDayOfInterval` to get the cells.
+   */
+  public static getEndOfGrid(date: Date | string): Date {
+    const d = this.getEndOfMonth(date);
+    const result = this.getStartOfDay(d);
+
+    // 6 is Saturday, the last column of a Sunday-first grid.
+    result.setDate(d.getDate() + (6 - d.getDay()));
+    return result;
+  }
+
+  /**
+   * Every day from `start` to `end` inclusive, as local midnights.
+   *
+   * Steps with setDate so it stays correct across DST boundaries. Returns an
+   * empty array when `end` falls before `start`.
+   *
+   * @example
+   * Dates.eachDayOfInterval(Dates.getStartOfGrid(d), Dates.getEndOfGrid(d));
+   */
+  public static eachDayOfInterval(start: Date | string, end: Date | string): Date[] {
+    const last = this.getStartOfDay(end).getTime();
+    const current = this.getStartOfDay(start);
+
+    const days: Date[] = [];
+
+    while (current.getTime() <= last) {
+      days.push(new Date(current.getTime()));
+      current.setDate(current.getDate() + 1);
+    }
+
+    return days;
+  }
+
+  /**
+   * Whether a date falls between two others.
+   *
+   * Compares exact instants, not calendar days; pair with `getStartOfDay` and
+   * `getEndOfDay` for a whole-day range. The bounds may be given in either
+   * order.
+   *
+   * @param inclusive Whether a date landing exactly on a bound counts.
+   */
+  public static isBetween(
+    date: Date | string,
+    start: Date | string,
+    end: Date | string,
+    inclusive: boolean = true,
+  ): boolean {
+    const value = this.parse(date).getTime();
+    const a = this.parse(start).getTime();
+    const b = this.parse(end).getTime();
+
+    const lower = Math.min(a, b);
+    const upper = Math.max(a, b);
+
+    return inclusive
+      ? value >= lower && value <= upper
+      : value > lower && value < upper;
   }
 
   public static isSameDay(date1: Date | string, date2: Date | string): boolean {

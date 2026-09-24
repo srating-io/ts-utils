@@ -15,6 +15,8 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-bitwise */
 
+import { Textor } from './Textor.js';
+
 
 
 
@@ -113,8 +115,8 @@ export class Style {
       '0px 11px 15px -7px rgba(0,0,0,0.2),0px 24px 38px 3px rgba(0,0,0,0.14),0px 9px 46px 8px rgba(0,0,0,0.12)',
     ];
 
-    if (depth > shadows.length || depth < 0) {
-      throw new Error(`min depth is 0, max depth is ${shadows.length}. Sent ${depth}`);
+    if (depth >= shadows.length || depth < 0 || !Number.isInteger(depth)) {
+      throw new Error(`min depth is 0, max depth is ${shadows.length - 1}. Sent ${depth}`);
     }
 
     return shadows[depth];
@@ -247,11 +249,6 @@ export class Style {
       return sel.replace(/:$/g, '');
     };
 
-    // Convert camelCase to kebab-case for property names
-    const toKebabCase = (str: string): string => {
-      return str.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-    };
-
     // Helper: Remove the specific '}' that closed the block from the accumulated lines
     // so we don't duplicate it when wrapping the result in new braces.
     const removeLastBrace = (lines: string[]) => {
@@ -339,7 +336,7 @@ export class Style {
       const rawProperty = line.slice(0, colonIndex).trim();
       let value: string | number = line.slice(colonIndex + 1).trim();
 
-      const property = toKebabCase(rawProperty);
+      const property = Textor.toKebabCase(rawProperty);
 
       // Remove trailing comma
       if (value.endsWith(',')) {

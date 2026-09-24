@@ -13,6 +13,7 @@
  */
 
 import { Kontororu } from '../Kontororu.js';
+import { Tasker } from '../Tasker.js';
 
 
 interface SocketConfig {
@@ -73,15 +74,30 @@ class Socket extends Kontororu {
     }
 
     if (typeof window !== 'undefined') {
+      let offline_timeout: ReturnType<typeof setTimeout> | undefined;
+
+      const stopOfflineChecks = () => {
+        if (offline_timeout) {
+          clearTimeout(offline_timeout);
+          offline_timeout = undefined;
+        }
+      };
+
       const offlineChecker = () => {
+        // A flapping connection fires 'offline' repeatedly. Each run owns its
+        // own `checked` counter but shares offline_timeout, so an earlier chain
+        // left running would become uncancellable and poll forever.
+        stopOfflineChecks();
+
         const check = 3;
         let checked = 1;
 
         const checker = () => {
           if (checked > check) {
+            offline_timeout = undefined;
             return;
           }
-          setTimeout(
+          offline_timeout = setTimeout(
             () => {
               this.check_staleness('offline');
               checked++;
@@ -95,7 +111,11 @@ class Socket extends Kontororu {
       };
 
       window.addEventListener('online', () => {
-        window.removeEventListener('offline', offlineChecker);
+        // Cancel the pending staleness polls rather than unregistering the
+        // 'offline' handler, which would leave every later offline event
+        // undetected.
+        stopOfflineChecks();
+        this.check_staleness('online');
       });
       window.addEventListener('offline', offlineChecker);
     }
@@ -132,6 +152,11 @@ class Socket extends Kontororu {
     ) {
       return;
     }
+
+    // An explicit connect() re-arms auto-reconnect. Without this, a manual
+    // disconnect() would disable reconnection for the rest of the page's life,
+    // including for connections opened afterwards.
+    this.should_reconnect = true;
 
     this.ws = new WebSocket(this.get_url());
 
@@ -291,7 +316,7 @@ class Socket extends Kontororu {
     if (debug) console.log('websocket handle close()');
     this.update_connection_state('disconnected');
     if (this.should_reconnect) {
-      const delay = Math.min(1000 * Math.pow(2, this.reconnect_attempts), 30000);
+      const delay = Tasker.backoff(this.reconnect_attempts, { delay: 1000, maxDelay: 30000 });
       if (debug) console.log(`Connection lost. Retrying in ${delay}ms... (Attempt ${this.reconnect_attempts + 1})`);
 
       this.reconnect_timeout = setTimeout(() => {

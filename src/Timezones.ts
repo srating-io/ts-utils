@@ -1,4 +1,4 @@
-export type IANATimeZone = 
+export type IANATimeZone =
   | 'Africa/Abidjan'
   | 'Africa/Accra'
   | 'Africa/Addis_Ababa'
