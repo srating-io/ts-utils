@@ -121,6 +121,47 @@ export class Arithmetic {
   }
 
   /**
+   * The trailing mean at each position, over that position and the `window - 1`
+   * values before it.
+   *
+   * The leading positions average what is there rather than being left empty,
+   * so the result is the same length as the input and a series drawn from it
+   * starts at its own first point. An empty list yields an empty list.
+   *
+   * Throws when the window is not a whole number of at least 1, which cannot be
+   * honoured as a count of values. A non-finite value poisons every position
+   * after it, because the window total is carried rather than re-summed; filter
+   * the gaps out before calling if the series has any.
+   *
+   * @example
+   * Arithmetic.rollingMean([1, 2, 3, 4], 2); // [1, 1.5, 2.5, 3.5]
+   */
+  public static rollingMean(values: number[], window: number): number[] {
+    if (!Number.isInteger(window) || window < 1) {
+      throw new Error(`rolling window must be a whole number of at least 1. Sent ${window}`);
+    }
+
+    const means: number[] = new Array(values.length);
+    let total = 0;
+
+    for (let i = 0; i < values.length; i++) {
+      total += values[i];
+
+      // the value leaving the window is subtracted rather than
+      // the window being re-summed, which keeps the walk linear in the length
+      // of the series but lets rounding error accumulate across it. Compensated
+      // summation would cost a second accumulator per step.
+      if (i >= window) {
+        total -= values[i - window];
+      }
+
+      means[i] = total / Math.min(i + 1, window);
+    }
+
+    return means;
+  }
+
+  /**
    * Middle value, averaging the two middle values for an even-length list.
    * NaN when the list is empty.
    */

@@ -109,7 +109,7 @@ Arithmetic.normalize(1500, 1000, 2000);        // 0.5
 
 ### Descriptive statistics
 
-`sum`, `mean`, `median`, `mode`, `variance`, `stdDev`, and `percentile`.
+`sum`, `mean`, `rollingMean`, `median`, `mode`, `variance`, `stdDev`, and `percentile`.
 
 Aggregates over an empty list return `NaN` rather than `0`, so an empty data set is visibly empty instead of silently reading as a real zero. `variance` and `stdDev` are sample statistics (dividing by `n - 1`); pass `true` as the second argument for the population form.
 
@@ -121,6 +121,12 @@ Arithmetic.median(scores);          // 79
 Arithmetic.stdDev(scores);          // 11.97...
 Arithmetic.percentile(scores, 90);  // 92.2
 Arithmetic.mode([1, 2, 2, 3]);      // [2]   (every tied value, in first-seen order)
+```
+
+`rollingMean` returns the trailing mean at each position, for smoothing a noisy series into a trend. The result is the same length as the input: the leading positions average what is there rather than being left empty, so a line drawn from it starts at its own first point. The window total is carried rather than re-summed, which keeps the walk linear — so filter out any gaps first, as one non-finite value poisons every position after it.
+
+```ts
+Arithmetic.rollingMean([1, 2, 3, 4], 2);  // [1, 1.5, 2.5, 3.5]
 ```
 
 ---

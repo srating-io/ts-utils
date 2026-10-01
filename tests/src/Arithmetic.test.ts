@@ -156,6 +156,57 @@ describe('Arithmetic', () => {
     });
   });
 
+  describe('rollingMean()', () => {
+    test('averages each position with the values before it', () => {
+      expect(Arithmetic.rollingMean([1, 2, 3, 4], 2)).toEqual([1, 1.5, 2.5, 3.5]);
+      expect(Arithmetic.rollingMean([2, 4, 6, 8, 10], 3)).toEqual([2, 3, 4, 6, 8]);
+    });
+
+    test('averages what is there until the window fills', () => {
+      expect(Arithmetic.rollingMean([5, 15], 5)).toEqual([5, 10]);
+    });
+
+    test('returns the values themselves for a window of 1', () => {
+      expect(Arithmetic.rollingMean([3, 1, 4], 1)).toEqual([3, 1, 4]);
+    });
+
+    test('matches mean() once the window covers the whole list', () => {
+      const values = [1, 2, 3, 4, 5];
+      const means = Arithmetic.rollingMean(values, values.length);
+
+      expect(means[means.length - 1]).toBe(Arithmetic.mean(values));
+    });
+
+    test('keeps the length of the input, including an empty list', () => {
+      expect(Arithmetic.rollingMean([], 3)).toEqual([]);
+      expect(Arithmetic.rollingMean([1, 2, 3], 2)).toHaveLength(3);
+    });
+
+    test('a window the series never reaches never averages more than it has seen', () => {
+      expect(Arithmetic.rollingMean([10, 20, 30], 100)).toEqual([10, 15, 20]);
+    });
+
+    test('handles negative values', () => {
+      expect(Arithmetic.rollingMean([-2, -4, 6], 2)).toEqual([-2, -3, 1]);
+    });
+
+    test('a non-finite value poisons every later position, since the total is carried', () => {
+      const means = Arithmetic.rollingMean([1, NaN, 3, 4], 2);
+
+      expect(means[0]).toBe(1);
+      expect(means[1]).toBeNaN();
+      expect(means[2]).toBeNaN();
+      expect(means[3]).toBeNaN();
+    });
+
+    test('throws on a window that cannot be a count of values', () => {
+      expect(() => Arithmetic.rollingMean([1, 2], 0)).toThrow('rolling window must be a whole number of at least 1');
+      expect(() => Arithmetic.rollingMean([1, 2], -1)).toThrow();
+      expect(() => Arithmetic.rollingMean([1, 2], 2.5)).toThrow();
+      expect(() => Arithmetic.rollingMean([1, 2], NaN)).toThrow();
+    });
+  });
+
   describe('median()', () => {
     test('returns the middle value of an odd-length list', () => {
       expect(Arithmetic.median([3, 1, 2])).toBe(2);
