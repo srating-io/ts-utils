@@ -63,8 +63,25 @@ class Socket extends Kontororu {
   // 3 Heartbeats + 1s buffer = 16 seconds
   private readonly DISCONNECT_THRESHOLD_MS = (this.HEARTBEAT_INTERVAL_MS * 3) + 1000;
 
-  constructor() {
-    super();
+  private lifecycle_listeners_attached = false;
+
+  /**
+   * Attach the tab-visibility and online/offline staleness checks.
+   *
+   * Deliberately not done in the constructor. `socket` is a module-level
+   * singleton, so constructing it on import would make importing this module
+   * observably side-effecting, which forces every bundler to keep it in a
+   * consumer's build even when they never touch the socket. Attaching on the
+   * first connect() keeps construction pure, and a socket nobody connects
+   * holds no listeners.
+   */
+  private attach_lifecycle_listeners() {
+    if (this.lifecycle_listeners_attached) {
+      return;
+    }
+
+    this.lifecycle_listeners_attached = true;
+
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', (event) => {
         if (document.visibilityState === 'visible') {
@@ -152,6 +169,8 @@ class Socket extends Kontororu {
     ) {
       return;
     }
+
+    this.attach_lifecycle_listeners();
 
     // An explicit connect() re-arms auto-reconnect. Without this, a manual
     // disconnect() would disable reconnection for the rest of the page's life,

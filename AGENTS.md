@@ -28,3 +28,23 @@ You are an experienced developer working on the ts-utils project. Your task is t
 * Leave CONSIDER(name): comments for future design considerations.
 * Regenerate code when interface definitions change.
 * Do not introduce new third party libraries unless specifically requested.
+
+## Commits
+- Classify every commit with a type prefix: `type: short summary`, or `type(scope): short summary` when a scope clarifies.
+- Types: `feat` (new capability), `fix` (a bug), `perf` (speed or memory), `refactor` (no behavior change), `style` (formatting or lint only, no logic), `test` (tests only), `docs` (docs or comments only), `chore` (deps, config, tooling, version bumps), `build` (bundling or emitted output), `ci` (workflows), `revert` (undo a prior commit).
+- Keep the subject short and imperative: under ~72 chars, lowercase, no trailing period. Say what changed, not how.
+- 3 lines max, and prefer 1. Depth belongs in the PR, not the message. Trailers such as `Co-Authored-By` do not count toward the 3.
+- One logical change per commit. If the subject needs an "and", it should probably be two commits.
+
+## Branches
+- Create branches locally and keep them local. Never push a branch to a remote, and never open a PR from one.
+- Never push to `master`, never force-push, never merge into `master`.
+- Hand finished work off as a local branch name for a human to check out and review.
+- Only exception: a publish or release the user explicitly asks for, which may push a tag on `master`. Never run one unprompted.
+
+## Worktrees
+- Unlock the worktree before your turn ends: commit your work, then run `git worktree remove <path>` from the repo root.
+- Removing the directory is what unlocks it. Leaving it on disk keeps the branch checked out there, so a human cannot `git checkout` that branch without deleting the directory by hand first. Exiting the worktree but keeping it is not unlocking it.
+- Keep the branch and its commits. Never delete a branch, discard commits, or revert work in order to unlock.
+- Staying in the same worktree across turns is fine when asked to keep coding; unlock it once that work is done.
+- Never leave a worktree behind for a human to clean up.

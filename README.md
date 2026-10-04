@@ -46,6 +46,20 @@ yarn add @esmalley/ts-utils
 
 ```
 
+Every module is also published as its own entry point. Both forms below are
+tree-shaken down to just what you reference, so pick whichever reads better:
+
+```ts
+import { Arithmetic } from '@esmalley/ts-utils';
+import { Arithmetic } from '@esmalley/ts-utils/Arithmetic';
+import { Store } from '@esmalley/ts-utils/Kontororu/Store';
+```
+
+No module does any work on import, so a module you never reference costs you
+nothing. `socket` attaches its tab-visibility and online/offline listeners on
+the first `connect()` rather than on import, so a socket you never connect
+holds no listeners.
+
 ---
 
 # Modules
