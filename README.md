@@ -981,6 +981,22 @@ uuidService.isValid('not-a-id');  // false
 
 ---
 
+# Building
+
+```bash
+npm run build
+```
+
+If the github CI fail on `npm ci`, you need to clear cache and install correct os versions
+
+```bash
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install --os=linux,win32,darwin --cpu=x64,arm64
+```
+
+---
+
 # Testing
 
 Unit tests run on Jest in ESM mode:
