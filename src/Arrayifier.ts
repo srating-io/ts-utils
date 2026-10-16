@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  */
 
+import { Textor } from './Textor.js';
+
 // Built once: a collator is far cheaper to reuse than String.localeCompare,
 // which rebuilds its collation table on every comparison.
 const COLLATOR = new Intl.Collator();
@@ -44,6 +46,38 @@ export class Arrayifier {
 
     return array;
   }
+
+  /**
+    * Shuffle an array the same way every time for a given seed.
+    *
+    * Fisher-Yates, driven by mulberry32 seeded from the string, so the same seed and the same
+    * input always give the same order. Use it where the order has to be defensible afterwards
+    * rather than merely random.
+    * @param {array} array The array to shuffle
+    * @param {string} seed Anything stable; store it to replay the order later
+    * @return array a new array, the input is left alone
+    */
+  public static shuffleWithSeed<T>(array: T[], seed: string): T[] {
+    let state = Textor.hashToInt(seed);
+
+    const next = (): number => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    const shuffled = [...array];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(next() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+  }
+
 
   /**
    * Recursively generates all combinations of size `r` from an array of `n` elements.
