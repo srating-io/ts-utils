@@ -152,21 +152,54 @@ export class Style {
     return this.cssMap;
   }
 
-  // SSR helper to get all collected styles
+  /**
+   * Every rule this process has generated. A server render wants `ServerStyleSheet` instead,
+   * which scopes to one request.
+   */
   public static getCSS(): string {
-    console.warn('this does not work yet, in root layout need to add a context thing so it attaches css to style when streamed from server');
     return Array.from(this.cssMap.values()).join('\n');
   }
 
-  // Call after SSR render to clean up for next render
+  /** Drops everything, for tests. */
   public static flush(): void {
     this.styleCache.clear();
     this.cssMap.clear();
+    this.touched.clear();
   }
 
+  /**
+   * Rules the server already put in the document. Hydration renders the same classes, and
+   * without this each one would be appended to the head a second time.
+   */
+  public static markInjected(classNames: Iterable<string>): void {
+    for (const className of classNames) {
+      this.styleCache.add(className);
+    }
+  }
+
+  /** Where a `ServerStyleSheet` starts counting from. */
+  public static mark(): number {
+    return this.seq;
+  }
+
+  /** `[className, css]` for every rule the server was asked for after `since`, oldest first. */
+  public static* touchedSince(since: number): Generator<[string, string]> {
+    for (const [className, seq] of this.touched) {
+      if (seq > since) {
+        yield [className, this.cssMap.get(className) as string];
+      }
+    }
+  }
+
+  /** In the document already. Client only, so a server never dedupes a request's rules away. */
   private static styleCache: Set<string> = new Set();
 
   private static cssMap: CSSMap = new Map(); // key: className, value: finalCSS
+
+  private static seq = 0;
+
+  /** className -> seq of its latest server request, ordered by that seq */
+  private static touched: Map<string, number> = new Map();
 
   private static hashCSS(css: string | object, debug = false): string {
     const canonicalize = (obj: object | string | number): object | string | number => {
@@ -222,25 +255,32 @@ export class Style {
   }
 
   private static injectStyle(className: string, css: string | object, debug = false): void {
-    if (
-      this.styleCache.has(className)
-    ) {
+    const isServer = typeof window === 'undefined';
+
+    if (!isServer && this.styleCache.has(className)) {
       return;
     }
 
-    const finalCSS = this.processCSS(className, css, false, debug);
+    let finalCSS = this.cssMap.get(className);
 
-    // If on server, store it only
-    if (typeof window === 'undefined') {
+    if (finalCSS === undefined) {
+      finalCSS = this.processCSS(className, css, false, debug);
       this.cssMap.set(className, finalCSS);
-    } else {
-      const styleEl = document.createElement('style');
-      styleEl.textContent = finalCSS;
-      document.head.appendChild(styleEl);
     }
 
+    if (isServer) {
+      // recorded on every call, not the first: the request rendering a class is the one that has
+      // to ship its rule, and a process-wide cache would hide it from every request after the first
+      this.touched.delete(className);
+      this.touched.set(className, ++this.seq);
+      return;
+    }
+
+    const styleEl = document.createElement('style');
+    styleEl.textContent = finalCSS;
+    document.head.appendChild(styleEl);
+
     this.styleCache.add(className);
-    this.cssMap.set(className, finalCSS);
   }
 
   private static processCSS(className: string, css: string | object, isRecursive = false, debug = false): string {
@@ -497,4 +537,3 @@ export class Style {
     return `${topLevelCSS} ${nestedRules.join(' ')} ${atRules.join(' ')}`.replace(/\s\s+/g, ' ').trim();
   }
 }
-

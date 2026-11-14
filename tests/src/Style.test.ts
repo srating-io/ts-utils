@@ -1,4 +1,5 @@
 import { Style } from '../../src/Style.js';
+import { ServerStyleSheet } from '../../src/ServerStyleSheet.js';
 import { jest } from '@jest/globals';
 
 
@@ -508,5 +509,79 @@ describe('Style.getShadow', () => {
 
   test('rejects a fractional depth', () => {
     expect(() => Style.getShadow(1.5)).toThrow('min depth is 0');
+  });
+});
+
+describe('Style on the server', () => {
+  const css = { color: 'red', '&:hover': { color: 'blue' } };
+
+  beforeEach(() => {
+    // no window is what makes Style take the server path
+    // @ts-expect-error -- jest's node environment never defines these, the block above fakes them
+    delete global.window;
+    // @ts-expect-error -- see above
+    delete global.document;
+    Style.flush();
+  });
+
+  test('a sheet ships a rule once', () => {
+    const sheet = new ServerStyleSheet();
+    const className = Style.getStyleClassName(css);
+
+    const first = sheet.flush();
+    expect(first?.classNames).toEqual([className]);
+    expect(first?.css).toContain(`.${className} { color: red; }`);
+    expect(first?.css).toContain(`.${className}:hover { color: blue; }`);
+
+    expect(sheet.flush()).toBeNull();
+  });
+
+  test('a later request sees a rule an earlier one already generated', () => {
+    const className = Style.getStyleClassName(css);
+    const sheet = new ServerStyleSheet();
+
+    // the process already has it, so a dedupe here would leave this request unstyled
+    expect(Style.getStyleClassName(css)).toBe(className);
+    expect(sheet.flush()?.classNames).toEqual([className]);
+    // and the css itself was only built once
+    expect(Style.getMap().size).toBe(1);
+  });
+
+  test('a sheet does not see rules requested before it existed', () => {
+    Style.getStyleClassName(css);
+    const sheet = new ServerStyleSheet();
+
+    expect(sheet.flush()).toBeNull();
+  });
+
+  test('flushes in request order, a re-request moving a rule last', () => {
+    const sheet = new ServerStyleSheet();
+    const a = Style.getStyleClassName({ color: 'red' });
+    const b = Style.getStyleClassName({ color: 'blue' });
+
+    expect(sheet.flush()?.classNames).toEqual([a, b]);
+
+    Style.getStyleClassName({ color: 'red' });
+    Style.getStyleClassName({ color: 'green' });
+    expect(new ServerStyleSheet().flush()).toBeNull();
+    expect([...Style.touchedSince(0)].map(([className]) => className)).toEqual([b, a, Style.getStyleClassName({ color: 'green' })]);
+  });
+
+  test('markInjected keeps the client from appending a rule the server sent', () => {
+    // minted on the server, as the html the client is about to hydrate was
+    const className = Style.getStyleClassName(css);
+    Style.flush();
+
+    const appendChild = jest.fn();
+    global.document = {
+      createElement: jest.fn().mockReturnValue({ textContent: '' }),
+      head: { appendChild },
+    } as unknown as Document;
+    // @ts-expect-error -- enough of a window for Style to take the client path
+    global.window = {};
+    Style.markInjected([className]);
+
+    expect(Style.getStyleClassName(css)).toBe(className);
+    expect(appendChild).not.toHaveBeenCalled();
   });
 });
